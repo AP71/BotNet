@@ -1,10 +1,16 @@
 import socket
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from httpServerRH import HTTPServerRH
+
 
 class Bot:
+    myIp = socket.gethostbyname(socket.gethostname())
     host = '127.0.0.1'
     port = 49171
     status = ''
-    ports = [49199]
+    ports = [80]
+
     def __init__(self):
         self.sendInfo()
         self.status = 'waiting'
@@ -14,31 +20,22 @@ class Bot:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.host, self.port))
-            message = socket.gethostbyname(socket.gethostname()) + " " + self.ports.__str__()
+            message = self.myIp + " " + self.ports.__str__()
             while message != 'bot registrated succesfully':
                 s.send(message.encode())
                 message = s.recv(1024).decode()
             s.close()
         except Exception as e:
-            print("Information send error: ",e)
+            print("Information send error: ", e)
         finally:
             s.close()
 
     def listen(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.bind(('', self.ports[0]))
-            while (True):
-                s.listen()
-                conn, addr = s.accept()
-                data = conn.recv(1024).decode()
-                data = data.split(" ")
-                print(data)
-                conn.close()
+            httpd = HTTPServer((self.myIp, self.ports[0]), HTTPServerRH)
+            httpd.serve_forever()
         except Exception as e:
-            print("Listening error: ",e)
-        finally:
-            s.close()
+            print("HTTP error: ", e)
 
 
 if __name__ == '__main__':
