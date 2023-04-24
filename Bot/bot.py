@@ -9,7 +9,7 @@ class Bot:
     host = '127.0.0.1'
     port = 49171
     status = ''
-    ports = [80]
+    ports = [80, 1111, 9989]
 
     def __init__(self):
         self.sendInfo()
@@ -20,7 +20,7 @@ class Bot:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.host, self.port))
-            message = self.myIp + " " + self.ports.__str__()
+            message = self.myIp + " " + self.ports.__str__().replace(' ','')
             while message != 'bot registrated succesfully':
                 s.send(message.encode())
                 message = s.recv(1024).decode()

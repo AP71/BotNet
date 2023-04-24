@@ -1,17 +1,20 @@
+import json
 from http.server import BaseHTTPRequestHandler
 
 
 class HTTPServerRH(BaseHTTPRequestHandler):
 
-    def doGET(self):
+    status = "waiting"
+
+    def do_GET(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
-        message = ''
-        self.wfile.write(message, 'utf-8')
+        message = { "status": self.status}
+        self.wfile.write(json.dumps(message).encode('utf-8'))
         return
 
-    def doPOST(self):
+    def do_POST(self):
         contentLength = int(self.headers['Content-Length'])
         postData = self.rfile.read(contentLength)
         self.send_response(200)
