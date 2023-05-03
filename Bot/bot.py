@@ -3,7 +3,9 @@ import socket
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from concurrent.futures import ThreadPoolExecutor
 from httpServerRH import HTTPServerRH
-import ftpServer
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
 
 
 class Bot:
@@ -20,6 +22,7 @@ class Bot:
         task = []
         with ThreadPoolExecutor(max_workers=2) as exec:
             task.append(exec.submit(self.httpServer()))
+            task.append(exec.submit(self.ftpServer()))
             done, not_done = concurrent.futures.wait(task, return_when=concurrent.futures.FIRST_COMPLETED)
             exec.shutdown(wait=False)
 
@@ -46,7 +49,16 @@ class Bot:
 
     def ftpServer(self):
         try:
-            ftpServer.run(self.myIp, self.port)
+            authorizer = DummyAuthorizer()
+            authorizer.add_user("CC", "Sicurezza", "./file", perm='r')
+            handler = FTPHandler
+            handler.authorizer = authorizer
+            handler.banner = "pyftpdlib based ftpd ready."
+            address = (self.myIp, self.ftpPort)
+            server = FTPServer(address, handler)
+            server.max_cons = 256
+            server.max_cons_per_ip = 5
+            server.serve_forever()
         except Exception as e:
             print("FTP error: ", e)
 

