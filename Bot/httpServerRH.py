@@ -1,6 +1,7 @@
 import json
 import platform
 import psutil
+from multiprocessing import Process
 from http.server import BaseHTTPRequestHandler
 
 import requests
@@ -21,6 +22,7 @@ def get_size(bytes, suffix="B"):
 
 
 def doRequest(url, time):
+    print("Invio richieste")
     for i in range(time):
         try:
             print("Doing request at ", url)
@@ -30,18 +32,20 @@ def doRequest(url, time):
 
 
 class HTTPServerRH(BaseHTTPRequestHandler):
-    status = "waiting"
+    target = ""
+    action = "waiting"
 
     def do_GET(self):
         if self.path == "/status":
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            message = {"status": self.status}
+            message = {"target": self.target, "action":self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
         elif self.path == "/getSystemInfo":
-            self.status = "waiting"
+            self.target = ""
+            self.action = "System info"
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -71,12 +75,18 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             contentLength = int(self.headers['Content-Length'])
             postData = self.rfile.read(contentLength).decode("utf-8")
             req = json.loads(postData)
-            self.status = "executing http request"
+            self.target = req["url"]
+            self.action = "Get " + str(req["time"]) + " times"
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            message = {"status": self.status}
+            try:
+                p = Process(target=doRequest, args=(req["url"], int(req["time"])))
+                p.daemon = True
+                p.start()
+            except Exception as e:
+                print(e)
+            message = {"target": self.target, "action": self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
-            doRequest(req["url"], int(req["time"]))
             return
 

