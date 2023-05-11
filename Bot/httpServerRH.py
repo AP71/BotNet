@@ -1,5 +1,7 @@
 import json
 import platform
+import smtplib
+import ssl
 import threading
 import psutil
 from http.server import BaseHTTPRequestHandler
@@ -24,7 +26,13 @@ class HTTPServerRH(BaseHTTPRequestHandler):
     target = ""
     action = "waiting"
     event = threading.Event()
-
+    smtp_server = "smtp.gmail.com"
+    port = 465
+    password = "okhdsuuaxseqzrnz"
+    sender = "flypilot.51@gmail.com"
+    context = ssl.create_default_context()
+    #def log_message(self, format, *args):
+     #   return
 
     def do_GET(self):
         if self.path == "/status":
@@ -90,15 +98,42 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             message = {"target": self.target, "action": self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
+        if self.path == "/sendEmail":
+            contentLength = int(self.headers['Content-Length'])
+            postData = self.rfile.read(contentLength).decode("utf-8")
+            data = json.loads(postData)
+            self.target = len(data['utenti'])
+            self.action = "Sending email to " + str(self.target) + " users"
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            try:
+                print(data)
+                p = threading.Thread(target=self.sendEmail, args=(data['utenti'], data['messaggio']))
+                p.daemon = True
+                p.start()
+            except Exception as e:
+                print(e)
+            message = {"target": self.target, "action": self.action}
+            self.wfile.write(json.dumps(message).encode('utf-8'))
+            return
 
     def doRequest(self, url, time):
         i = 0
         while (i < time or time == -1) and not self.event.is_set():
             try:
-                print("Doing request at ", url)
                 response = requests.get(url)
             except Exception as e:
                 print("Request error: ", e)
             if time != -1:
                 i += 1
         self.event.clear()
+
+    def sendEmail(self, utenti, data):
+        try:
+            with smtplib.SMTP_SSL(self.smtp_server, self.port, context=self.context) as server:
+                server.login(self.sender, self.password)
+                for u in utenti:
+                    server.sendmail(self.sender, u, data)
+        except Exception as e:
+            print(e)
