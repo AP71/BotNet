@@ -13,7 +13,7 @@ class Bot:
     host = '127.0.0.1'
     port = 49171
     httpPort = 80
-    ftpPort = 1111
+    ftpPort = 21
 
     def __init__(self):
         self.sendInfo()
@@ -39,11 +39,13 @@ class Bot:
             s.close()
 
     def httpServer(self):
+        httpd = None
         try:
             httpd = HTTPServer((self.myIp, self.httpPort), HTTPServerRH)
             httpd.serve_forever()
         except Exception as e:
             print("HTTP error: ", e)
+            httpd.shutdown()
 
     def ftpServer(self):
         try:

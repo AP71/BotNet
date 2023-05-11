@@ -1,8 +1,8 @@
 {
   "127.0.1.1": {
     "http": 80,
-    "ftp": 1111,
-    "target": "http://youtube.com",
-    "action": "Get 10 times"
+    "ftp": 21,
+    "target": "",
+    "action": "waiting"
   }
 }

