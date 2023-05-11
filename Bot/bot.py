@@ -19,8 +19,8 @@ class Bot:
         self.sendInfo()
         task = []
         with ThreadPoolExecutor(max_workers=2) as exec:
-            task.append(exec.submit(self.httpServer()))
             task.append(exec.submit(self.ftpServer()))
+            task.append(exec.submit(self.httpServer()))
             done, not_done = concurrent.futures.wait(task, return_when=concurrent.futures.FIRST_COMPLETED)
             exec.shutdown(wait=False)
 
@@ -39,6 +39,7 @@ class Bot:
             s.close()
 
     def httpServer(self):
+        print("Avvio HTTP")
         httpd = None
         try:
             httpd = HTTPServer((self.myIp, self.httpPort), HTTPServerRH)
@@ -46,8 +47,10 @@ class Bot:
         except Exception as e:
             print("HTTP error: ", e)
             httpd.shutdown()
+        print("Fine HTTP")
 
     def ftpServer(self):
+        print("Avvio FTP")
         try:
             authorizer = DummyAuthorizer()
             authorizer.add_user("CC", "Sicurezza", "./file", perm='r')
@@ -61,7 +64,7 @@ class Bot:
             server.serve_forever()
         except Exception as e:
             print("FTP error: ", e)
-
+        print("Chiusura FTP")
 
 if __name__ == '__main__':
     b = Bot()

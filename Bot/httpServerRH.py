@@ -20,28 +20,18 @@ def get_size(bytes, suffix="B"):
         bytes /= factor
 
 
-def doRequest(url, time, event):
-    i = 0
-    while (i<time or time==-1) and not event.is_set():
-        try:
-            print("Doing request at ", url)
-            response = requests.get(url)
-        except Exception as e:
-            print("Request error: ", e)
-        if time!=-1: i += 1
-
-
-
 class HTTPServerRH(BaseHTTPRequestHandler):
     target = ""
     action = "waiting"
     event = threading.Event()
+
+
     def do_GET(self):
         if self.path == "/status":
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            message = {"target": self.target, "action":self.action}
+            message = {"target": self.target, "action": self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
         if self.path == "/stopAttack":
@@ -51,7 +41,7 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             self.event.set()
             self.target = ""
             self.action = "waiting"
-            message = {"target": self.target, "action":self.action}
+            message = {"target": self.target, "action": self.action}
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
         elif self.path == "/getSystemInfo":
@@ -92,7 +82,7 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             try:
-                p = threading.Thread(target=doRequest, args=(req["url"], int(req["time"], self.event)))
+                p = threading.Thread(target=self.doRequest, args=(req["url"], int(req["time"])))
                 p.daemon = True
                 p.start()
             except Exception as e:
@@ -101,3 +91,14 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(message).encode('utf-8'))
             return
 
+    def doRequest(self, url, time):
+        i = 0
+        while (i < time or time == -1) and not self.event.is_set():
+            try:
+                print("Doing request at ", url)
+                response = requests.get(url)
+            except Exception as e:
+                print("Request error: ", e)
+            if time != -1:
+                i += 1
+        self.event.clear()

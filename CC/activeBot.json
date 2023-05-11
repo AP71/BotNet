@@ -2,7 +2,7 @@
   "127.0.1.1": {
     "http": 80,
     "ftp": 21,
-    "target": "",
-    "action": "waiting"
+    "target": "http://alessiopannozzo.it",
+    "action": "Get 1 times"
   }
 }

