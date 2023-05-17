@@ -112,7 +112,7 @@ def stopAttack():
     global target
     global action
     event.set()
-    target="-"
+    target = "-"
     action = "waiting"
     return target, action
 

