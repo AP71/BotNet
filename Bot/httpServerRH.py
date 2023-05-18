@@ -83,14 +83,17 @@ def get_size(bytes, suffix="B"):
 def batchEmail(oggetto, message, utenti):
     global target
     global action
+    ut = None
+    if "[" in utenti and "]" in utenti and "," in utenti:
+        ut = utenti.strip("[]").split(",")
     try:
-        p = threading.Thread(target=sendEmail, args=(oggetto, message, utenti))
+        p = threading.Thread(target=sendEmail, args=(oggetto, message, ut if ut is not None else utenti))
         p.daemon = True
         p.start()
     except Exception as e:
         print(e)
-    target = len(utenti)
-    action = "Sending email to " + len(utenti) + " users"
+    target = len(ut) if ut is not None else len(utenti)
+    action = "Sending email to " + str(target)+ " users"
     return target, action
 
 
@@ -144,10 +147,10 @@ def doRequest(url, time):
     i = 0
     while (i < time or time == -1) and not event.is_set():
         try:
-            print("Get to", url)
+            print("Get to", url, end="")
             response = requests.get(url)
         except Exception as e:
-            print("Request error: ", e)
+            print(" Request error:", url, "is not reachable")
         if time != -1:
             i += 1
     event.clear()
@@ -166,6 +169,8 @@ def sendEmail(oggetto, message, utenti):
             msg['Subject'] = oggetto
             msg['Form'] = sender
             for u in utenti:
+                if "'" in u:
+                    u = u.replace("'", "")
                 msg['To'] = u
                 server.sendmail(sender, u, msg.as_string())
     except Exception as e:
