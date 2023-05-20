@@ -47,7 +47,7 @@ def readMessage(s):
 
 class Bot:
     myIp = socket.gethostbyname(socket.gethostname())
-    host = '127.0.0.1'
+    host = '10.0.2.10'
     port = 49171
     httpPort = 80
     ircPort = 6667
