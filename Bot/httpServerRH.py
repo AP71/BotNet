@@ -99,7 +99,8 @@ def execRequest(url, time):
     global target
     global action
     global event
-    
+    if event.is_set():
+        event.clear()
     try:
         p = threading.Thread(target=doRequest, args=(url, int(time)))
         p.daemon = True
@@ -142,8 +143,7 @@ def doRequest(url, time):
     global action
     global event
     i = 0
-    if event.is_set():
-        event.clear()
+    
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
