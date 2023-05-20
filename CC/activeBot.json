@@ -1,8 +1,8 @@
 {
   "127.0.1.1": {
     "http": 80,
-    "irc": 6697,
-    "target": "-",
-    "action": "waiting"
+    "irc": 6667,
+    "target": "http://alessiopannozzo.it",
+    "action": "Get 5 times"
   }
 }

