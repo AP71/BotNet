@@ -147,8 +147,8 @@ def doRequest(url, time):
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
-            req = Request(url, timeout=10)
-            urlopen(req).read()
+            req = Request(url)
+            urlopen(req, timeout=10).read()
             print("")
         except HTTPError as e:
             print(" Request error:", url, "is not reachable:", e)
