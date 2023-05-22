@@ -138,7 +138,7 @@ def doRequest(url, time):
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
-            req = Request(url, headers={'User-agent': 'Mozilla/5.0'})
+            req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             urlopen(req, timeout=10).read()
         except TimeoutError as e:
             print(" Request error:", url, "is not reachable", end="")

