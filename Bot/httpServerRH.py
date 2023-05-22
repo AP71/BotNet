@@ -70,14 +70,6 @@ class HTTPServerRH(BaseHTTPRequestHandler):
             return
 
 
-def get_size(bytes, suffix="B"):
-    factor = 1024
-    for unit in ["", "K", "M", "G", "T", "P"]:
-        if bytes < factor:
-            return f"{bytes:.2f}{unit}{suffix}"
-        bytes /= factor
-
-
 def batchEmail(oggetto, message, utenti):
     global target
     global action
@@ -134,7 +126,7 @@ def getSystemInfo():
         return json.dumps(message)
     except Exception as e:
         print(e)
-        return json.dumps({"Errore": "Informazioni non disponibili"})
+        return json.dumps({"Error": "Information not available"})
 
 
 def doRequest(url, time):
@@ -146,7 +138,7 @@ def doRequest(url, time):
     while (i < time or time == -1) and not event.is_set():
         try:
             print("Get to", url, end="")
-            req = Request(url)
+            req = Request(url, headers={'User-agent': 'Mozilla/5.0'})
             urlopen(req, timeout=10).read()
         except TimeoutError as e:
             print(" Request error:", url, "is not reachable", end="")
@@ -178,7 +170,7 @@ def sendEmail(oggetto, message, utenti):
                 msg['To'] = u
                 server.sendmail(sender, u, msg.as_string())
     except Exception as e:
-        print(e)
+        print("Sending error:", e)
 
 
 def getStatus():
