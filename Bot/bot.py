@@ -10,7 +10,7 @@ def sendMessage(s, message):
 
 
 def readMessage(s):
-    buff = s.recv(2048).decode("UTF-8")
+    buff = s.recv(4096).decode("UTF-8")
     message = buff.split("\r\n")
     for m in message:
         if m.startswith("PING"):
