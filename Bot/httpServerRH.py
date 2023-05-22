@@ -169,7 +169,7 @@ def sendEmail(oggetto, message, utenti):
             server.login(sender, password)
             msg = MIMEText(message)
             msg['Subject'] = oggetto
-            msg['Form'] = sender
+            msg['From'] = sender
             for u in utenti:
                 if "'" in u:
                     u = u.replace("'", "")
