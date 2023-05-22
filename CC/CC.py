@@ -468,14 +468,14 @@ class CC:
         sleep(1)
         while (True):
             print("\n---------------Command list:---------------\n"
-                  "\t1) Show active bot\n"
-                  "\t2) Show active bot a their status\n"
+                  "\t1) Show active bots\n"
+                  "\t2) Show active bots and their status\n"
                   "\t3) Execute a get attack\n"
-                  "\t4) Get info about bot\n"
+                  "\t4) Get info about bots\n"
                   "\t5) Email attack\n"
                   "\t6) Stop all attacks\n"
-                  "\t7) Get bot status\n"
-                  "\t8) Check bot service\n"
+                  "\t7) Retrive bots status\n"
+                  "\t8) Check bots service\n"
                   "\t9) Stop CC\n")
             comando = input("C&C@command: ")
             match int(comando):
