@@ -130,7 +130,6 @@ def getSystemInfo():
             "Release": uname.release,
             "Version": uname.version,
             "Machine": uname.machine,
-            "Processor": platform.processor(),
         }
         return json.dumps(message)
     except Exception as e:
@@ -149,9 +148,12 @@ def doRequest(url, time):
             print("Get to", url, end="")
             req = Request(url)
             urlopen(req, timeout=10).read()
-            print("")
+        except TimeoutError as e:
+            print(" Request error:", url, "is not reachable", end="")
         except HTTPError as e:
-            print(" Request error:", url, "is not reachable:", e)
+            print(" Request error:", url, "is not reachable:", e, end="")
+        finally:
+            print("")
         if time != -1:
             i += 1
     target = "-"

