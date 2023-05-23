@@ -64,8 +64,8 @@ class Bot:
     def sendInfo(self):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((self.host, self.port))
             self.myIp = s.getsockname()[0]
+            s.connect((self.host, self.port))
             message = self.myIp + ' {"http":' + str(self.httpPort) + ',"irc":' + str(
                 self.ircPort) + ',"target":"-","action":"waiting"}'
             while message != 'bot registrated succesfully':
