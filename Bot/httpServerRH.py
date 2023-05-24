@@ -165,6 +165,7 @@ def sendEmail(oggetto, message, utenti):
             msg['Subject'] = oggetto
             msg['From'] = sender
             for u in utenti:
+                print("Sending email to", u)
                 if "'" in u:
                     u = u.replace("'", "")
                 msg['To'] = u
