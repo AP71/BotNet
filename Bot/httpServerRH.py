@@ -137,15 +137,14 @@ def doRequest(url, time):
     
     while (i < time or time == -1) and not event.is_set():
         try:
-            print("Get to", url, end="")
+            print("Get to", url)
             req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             urlopen(req, timeout=10).read()
         except TimeoutError as e:
-            print(" Request error:", url, "is not reachable", end="")
+            print("--> Request error:", url, "is not reachable")
         except HTTPError as e:
-            print(" Request error:", url, "is not reachable:", e, end="")
-        finally:
-            print("")
+            print("--> Request error:", url, "is not reachable:", e)
+
         if time != -1:
             i += 1
     target = "-"
