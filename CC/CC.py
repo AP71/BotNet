@@ -381,7 +381,7 @@ class CC:
         closeIrc(s)
 
     def sendIRCEmail(self, target=""):
-        users = ["gioelezoccoli99@gmail.com", "flypilot.51@gmail.com", "lorensosp0401@gmail.com"]
+        users = []
         oggetto = "Welcome to Our Newsletter - Thank You for Signing Up!"
         messaggio = "I hope this email finds you well. I would like to extend a warm welcome and express our heartfelt appreciation for joining our newsletter community. More info: https://www.youtube.com/watch?v=xvFZjo5PgG0",
 
