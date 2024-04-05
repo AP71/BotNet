@@ -139,8 +139,8 @@ def doRequest(url, time):
 def sendEmail(oggetto, message, utenti):
     smtp_server = "smtp.gmail.com"
     port = 465
-    password = "cebqshlncuewhjso"
-    sender = "botnetsicurezza@gmail.com"
+    password = ""
+    sender = ""
     context = ssl.create_default_context()
     try:
         with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
